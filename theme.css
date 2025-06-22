@@ -1,0 +1,31 @@
+:root {
+  --text-color: #222;      /* لون الخط للنمط الفاتح */
+  --heading-color: #111;   /* لون العناوين للنمط الفاتح */
+  --link-color: #0066cc;   /* لون الروابط للنمط الفاتح */
+  /* ...يمكن إضافة متغيرات أخرى... */
+}
+
+body {
+  color: var(--text-color);
+  background: #fff;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+/* نمط داكن */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: #eee;        /* لون الخط للنمط الداكن */
+    --heading-color: #fff;     /* لون العناوين للنمط الداكن */
+    --link-color: #4eaaff;     /* لون الروابط للنمط الداكن */
+  }
+  body {
+    background: #181818;
+  }
+}

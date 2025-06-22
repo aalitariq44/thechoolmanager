@@ -1,0 +1,34 @@
+/* ...existing code... */
+
+/* Light mode (default) */
+:root {
+  --text-color: #222222;
+  --heading-color: #111111;
+  --link-color: #0066cc;
+  /* ...يمكنك إضافة متغيرات أخرى حسب الحاجة... */
+}
+
+/* Dark mode */
+body.dark,
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: #f1f1f1;
+    --heading-color: #ffffff;
+    --link-color: #4ea1ff;
+  }
+}
+
+/* تطبيق الألوان على النصوص */
+body, p, span, li, td, th {
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+/* ...existing code... */
