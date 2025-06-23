@@ -31,7 +31,7 @@ export default function StudentRecord() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<'name' | 'absences'>('absences');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
   const [absenceDates, setAbsenceDates] = useState<{ [studentId: string]: string }>({});
   const [saving, setSaving] = useState<{ [studentId: string]: boolean }>({});
@@ -42,6 +42,9 @@ export default function StudentRecord() {
   const [studentAbsences, setStudentAbsences] = useState<AbsenceRecord[]>([]);
   const [absencesLoading, setAbsencesLoading] = useState(false);
   const [deletingAbsenceId, setDeletingAbsenceId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [absencesForDay, setAbsencesForDay] = useState<{ student: StudentData; absenceId: string }[]>([]);
+  const [loadingAbsencesForDay, setLoadingAbsencesForDay] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -181,6 +184,79 @@ export default function StudentRecord() {
     }
   };
 
+  // جلب غيابات يوم معين
+  const handleShowAbsencesForDay = async () => {
+    if (!selectedDate) return;
+    setLoadingAbsencesForDay(true);
+    try {
+      const absencesQuery = query(collection(db, 'absences'), where('date', '==', selectedDate));
+      const snapshot = await getDocs(absencesQuery);
+      const absencesList: { student: StudentData; absenceId: string }[] = [];
+      snapshot.forEach(absDoc => {
+        const data = absDoc.data();
+        const student = students.find(s => s.id === data.studentId);
+        if (student) {
+          absencesList.push({ student, absenceId: absDoc.id });
+        }
+      });
+      setAbsencesForDay(absencesList);
+    } catch (e) {
+      setAbsencesForDay([]);
+    } finally {
+      setLoadingAbsencesForDay(false);
+    }
+  };
+
+  // دالة لطباعة جدول الغيابات ليوم معين
+  const handlePrintAbsencesForDay = () => {
+    if (!selectedDate || absencesForDay.length === 0) return;
+    // بناء محتوى HTML للطباعة
+    const printContent = `
+      <html dir="rtl">
+      <head>
+        <title>غيابات يوم ${selectedDate}</title>
+        <style>
+          body { font-family: Tahoma, Arial, sans-serif; direction: rtl; color: #222; }
+          h2 { text-align: center; }
+          table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+          th, td { border: 1px solid #888; padding: 8px 12px; text-align: center; }
+          th { background: #f0f0f0; }
+        </style>
+      </head>
+      <body>
+        <h2>غيابات الطلاب ليوم ${selectedDate}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>التسلسل</th>
+              <th>اسم الطالب</th>
+              <th>الصف والشعبة</th>
+              <th>رقم التسجيل</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${absencesForDay.map((item, idx) => `
+              <tr>
+                <td>${idx + 1}</td>
+                <td>${item.student.personalInfo.name} ${item.student.personalInfo.fatherName || ''}</td>
+                <td>${item.student.personalInfo.currentClass}${item.student.personalInfo.currentSection ? `(${item.student.personalInfo.currentSection})` : ''}</td>
+                <td>${item.student.personalInfo.registrationNumber}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 500);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-4 text-center bg-white text-black" dir="rtl">
@@ -290,6 +366,69 @@ export default function StudentRecord() {
           </svg>
         </div>
       </div>
+
+      {/* اختيار يوم وعرض الغيابات في هذا اليوم */}
+      <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
+        <label className="text-lg font-semibold">عرض الغيابات ليوم:</label>
+        <input
+          type="date"
+          className="border rounded p-2 text-black"
+          value={selectedDate}
+          onChange={e => setSelectedDate(e.target.value)}
+        />
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+          onClick={handleShowAbsencesForDay}
+          disabled={!selectedDate || loadingAbsencesForDay}
+        >
+          {loadingAbsencesForDay ? 'جاري التحميل...' : 'عرض الغيابات'}
+        </button>
+        <button
+          className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50"
+          onClick={handlePrintAbsencesForDay}
+          disabled={!selectedDate || absencesForDay.length === 0}
+        >
+          طباعة الغيابات
+        </button>
+      </div>
+
+      {/* جدول الغيابات ليوم معين */}
+      {selectedDate && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-2">الغيابات ليوم {selectedDate}:</h2>
+          {loadingAbsencesForDay ? (
+            <div className="text-center py-4">جاري تحميل الغيابات...</div>
+          ) : absencesForDay.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">لا يوجد غيابات في هذا اليوم</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border rounded-lg mb-4">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="py-2 px-4 border">التسلسل</th>
+                    <th className="py-2 px-4 border">اسم الطالب</th>
+                    <th className="py-2 px-4 border">الصف والشعبة</th>
+                    <th className="py-2 px-4 border">رقم التسجيل</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {absencesForDay.map((item, idx) => (
+                    <tr key={item.absenceId}>
+                      <td className="py-2 px-4 border">{idx + 1}</td>
+                      <td className="py-2 px-4 border">{item.student.personalInfo.name} {item.student.personalInfo.fatherName}</td>
+                      <td className="py-2 px-4 border">
+                        {item.student.personalInfo.currentClass}
+                        {item.student.personalInfo.currentSection ? `(${item.student.personalInfo.currentSection})` : ''}
+                      </td>
+                      <td className="py-2 px-4 border">{item.student.personalInfo.registrationNumber}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {viewType === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

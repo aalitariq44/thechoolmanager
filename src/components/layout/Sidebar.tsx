@@ -23,7 +23,7 @@ function Sidebar(): JSX.Element {
   return (
     <div className="fixed top-0 right-0 w-64 h-full bg-white dark:bg-gray-800 shadow-lg p-4 text-right overflow-y-auto">
       <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">لوحة التحكم</h2>
-      
+
       {/* Navigation Links */}
       <div className="mb-8">
         <div onClick={() => router.push('/')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
@@ -147,6 +147,16 @@ function Sidebar(): JSX.Element {
           </svg>
           <span className="text-gray-700 dark:text-gray-300">الاجازة</span>
         </div>
+        <div onClick={() => router.push('/features/classes')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
+          {/* classes icon */}
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="6" rx="2" />
+            <rect x="3" y="14" width="18" height="6" rx="2" />
+          </svg>
+          <span className="text-gray-700 dark:text-gray-300">الصفوف والشعب</span>
+        </div>
+
+
 
         {/* قسم الإعدادات */}
         <div className="mt-6 mb-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -165,15 +175,15 @@ function Sidebar(): JSX.Element {
       {/* User Account Section */}
       <div className="mt-auto">
         <p className="mb-4 text-gray-700 dark:text-gray-300">{user?.email}</p>
-        
-        <div 
-          onClick={() => router.push('/features/users')} 
+
+        <div
+          onClick={() => router.push('/features/users')}
           className="w-full text-right bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 p-2 rounded transition-colors duration-200 mb-2 cursor-pointer"
         >
           ادارة المستخدمين
         </div>
 
-        <button 
+        <button
           onClick={handleLogout}
           className="w-full text-right bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 p-2 rounded transition-colors duration-200"
         >

@@ -4,6 +4,8 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { db } from '../../../../../firebase/config';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface StudentData {
   registrationNumber: string;
@@ -93,6 +95,8 @@ export default function EditStudentRecord() {
   const [originalStudentData, setOriginalStudentData] = useState<StudentData | null>(null);
   const [originalGradeColumns, setOriginalGradeColumns] = useState<GradeColumn[]>([]);
   const [originalSelectedSubjects, setOriginalSelectedSubjects] = useState<string[]>(initialSubjects.slice(0, -1));
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const pdfRef = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -241,6 +245,34 @@ export default function EditStudentRecord() {
         gradeColumns.some(col => (col.grades[subject] && col.grades[subject].trim() !== ''))
       );
 
+  // دالة تصدير PDF
+  const handleExportPDF = async () => {
+    if (!studentData) return;
+    setPdfLoading(true);
+    const element = document.getElementById('student-pdf-content');
+    if (!element) {
+      setPdfLoading(false);
+      return;
+    }
+    // استخدم html2canvas لتحويل العنصر لصورة ثم أضفها للـ PDF
+    const canvas = await html2canvas(element, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4'
+    });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    // احسب أبعاد الصورة لتناسب الصفحة
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pageWidth - 20;
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+    pdf.save(`student_${studentData.registrationNumber || 'record'}.pdf`);
+    setPdfLoading(false);
+  };
+
   if (!studentData) {
     return <div>Loading...</div>;
   }
@@ -248,9 +280,95 @@ export default function EditStudentRecord() {
   return (
     <div className="bg-white min-h-screen">
       <div className="container mx-auto p-4 text-right bg-white text-black" dir="rtl">
+        {/* عنصر مخفي لتصدير PDF */}
+        <div
+          id="student-pdf-content"
+          style={{
+            position: 'absolute',
+            right: '-9999px',
+            top: 0,
+            width: '800px',
+            background: '#fff',
+            color: '#000',
+            padding: '24px',
+            fontFamily: 'Arial, sans-serif',
+            zIndex: -1
+          }}
+          ref={pdfRef as any}
+        >
+          <h2 style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '24px', marginBottom: '24px' }}>
+            بيانات القيد للطالب
+          </h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
+            <tbody>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>رقم القيد</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.registrationNumber}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>اسم الطالب</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.name}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>اسم الأب وشهرته</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.fatherName}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>مسكن الأب</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.fatherAddress}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>صنعة الأب وعنوانه</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.fatherOccupation}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>اسم ولي أمر الطالب</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.guardian}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>اسم الأم</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.motherName}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>رقم دفتر النفوس</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.idNumber}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>مسقط الرأس</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.birthPlace}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>تاريخ الولادة</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.birthDate}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>الجنسية</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.nationality}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>تاريخ دخول المدرسة</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.schoolEntryDate}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>الصف الذي قبل فيه</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.acceptedClass}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>آخر مدرسة كان فيها</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.previousSchool}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>تاريخ المغادرة</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.leaveDate}</td>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>الصف الحالي</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.currentClass || ''}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>الشعبة الحالية</td>
+                <td style={{ padding: '8px', border: '1px solid #ccc' }}>{studentData.currentSection || ''}</td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-black">بيانات الطالب</h1>
           <div className="space-x-4 space-x-reverse flex items-center">
+            {/* زر تصدير PDF بجانب زر تعديل البيانات */}
+            <button
+              onClick={handleExportPDF}
+              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+              disabled={pdfLoading}
+            >
+              {pdfLoading ? 'جاري التحويل...' : 'تصدير PDF'}
+            </button>
             {!editMode && (
               <button
                 onClick={() => setEditMode(true)}
