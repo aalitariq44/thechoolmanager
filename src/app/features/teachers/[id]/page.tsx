@@ -67,6 +67,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('')
+  const [showPrint, setShowPrint] = useState(false);
 
   useEffect(() => {
     const fetchTeacher = async () => {
@@ -124,6 +125,14 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     }
   }
 
+  const handlePrint = () => {
+    setShowPrint(true);
+    setTimeout(() => {
+      window.print();
+      setShowPrint(false);
+    }, 100); // Allow DOM to update
+  };
+
   const graduationYears = Array.from(
     { length: new Date().getFullYear() - 1950 + 1 },
     (_, i) => (1950 + i).toString()
@@ -139,6 +148,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="container mx-auto p-6 bg-white dark:bg-gray-800" dir="rtl">
+      {/* زر الطباعة */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
           {isEditing ? 'تعديل بيانات المدرس' : 'عرض بيانات المدرس'}
@@ -160,10 +170,148 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
               حفظ التغييرات
             </button>
           )}
+          {/* زر الطباعة */}
+          <button
+            onClick={handlePrint}
+            className="bg-yellow-500 text-white px-4 py-2 rounded print:hidden"
+          >
+            طباعة البيانات
+          </button>
         </div>
       </div>
 
-      <div className="flex gap-6">
+      {/* نسخة الطباعة */}
+      {showPrint && (
+        <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
+          <h2 className="text-2xl font-bold mb-4 text-center">بيانات المدرس</h2>
+          <table className="w-full mb-4 border">
+            <tbody>
+              <tr>
+                <td className="border p-2 font-semibold">الاسم الرباعي واللقب</td>
+                <td className="border p-2">{teacher.fullName}</td>
+                <td className="border p-2 font-semibold">اسم الأم الثلاثي</td>
+                <td className="border p-2">{teacher.motherName}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">تاريخ الميلاد</td>
+                <td className="border p-2">{teacher.birthDate}</td>
+                <td className="border p-2 font-semibold">محل الولادة</td>
+                <td className="border p-2">{teacher.birthPlace}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">رقم الهاتف</td>
+                <td className="border p-2">{teacher.phoneNumber}</td>
+                <td className="border p-2 font-semibold">فصيلة الدم</td>
+                <td className="border p-2">{teacher.bloodType}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">الحالة الزوجية</td>
+                <td className="border p-2">{teacher.maritalStatus}</td>
+                <td className="border p-2 font-semibold">عنوان السكن</td>
+                <td className="border p-2">{teacher.address}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">اقرب نقطة دالة</td>
+                <td className="border p-2">{teacher.landmark}</td>
+                <td className="border p-2 font-semibold">رقم الجنسية</td>
+                <td className="border p-2">{teacher.nationalId}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">رقم بطاقة السكن</td>
+                <td className="border p-2">{teacher.residenceCardNumber}</td>
+                <td className="border p-2 font-semibold">رقم البطاقة التموينية</td>
+                <td className="border p-2">{teacher.rationCardNumber}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">الشهادة</td>
+                <td className="border p-2">{teacher.certificate}</td>
+                <td className="border p-2 font-semibold">الجامعة</td>
+                <td className="border p-2">{teacher.university}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">الكلية</td>
+                <td className="border p-2">{teacher.college}</td>
+                <td className="border p-2 font-semibold">الاختصاص</td>
+                <td className="border p-2">{teacher.specialization}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">سنة التخرج</td>
+                <td className="border p-2">{teacher.graduationYear}</td>
+                <td className="border p-2 font-semibold">رقم أمر التعيين</td>
+                <td className="border p-2">{teacher.appointmentOrderNumber}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">تاريخ أمر التعيين</td>
+                <td className="border p-2">{teacher.appointmentOrderDate}</td>
+                <td className="border p-2 font-semibold">تاريخ المباشرة بالوظيفة</td>
+                <td className="border p-2">{teacher.jobStartDate}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">العنوان الوظيفي</td>
+                <td className="border p-2">{teacher.jobTitle}</td>
+                <td className="border p-2 font-semibold">اسم الزوج/ة</td>
+                <td className="border p-2">{teacher.husbandsName}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">وظيفة الزوج/ة</td>
+                <td className="border p-2">{teacher.spouseOccupation}</td>
+                <td className="border p-2 font-semibold">تاريخ الزواج</td>
+                <td className="border p-2">{teacher.marriageDate}</td>
+              </tr>
+              <tr>
+                <td className="border p-2 font-semibold">عدد الأطفال</td>
+                <td className="border p-2">{teacher.numberOfChildren}</td>
+                <td className="border p-2"></td>
+                <td className="border p-2"></td>
+              </tr>
+            </tbody>
+          </table>
+          {/* الدورات التدريبية */}
+          <h3 className="text-lg font-semibold mb-2">الدورات التدريبية</h3>
+          <table className="w-full mb-4 border">
+            <thead>
+              <tr>
+                <th className="border p-2">اسم الدورة</th>
+                <th className="border p-2">المدة</th>
+                <th className="border p-2">المكان</th>
+                <th className="border p-2">التقدير</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teacher.trainingCourses?.map((course, idx) => (
+                <tr key={idx}>
+                  <td className="border p-2">{course.name}</td>
+                  <td className="border p-2">{course.duration}</td>
+                  <td className="border p-2">{course.location}</td>
+                  <td className="border p-2">{course.grade}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {/* كتب الشكر */}
+          <h3 className="text-lg font-semibold mb-2">كتب الشكر</h3>
+          <table className="w-full border">
+            <thead>
+              <tr>
+                <th className="border p-2">رقم وتاريخ الكتاب</th>
+                <th className="border p-2">صادر من</th>
+                <th className="border p-2">السبب</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teacher.appreciationLetters?.map((letter, idx) => (
+                <tr key={idx}>
+                  <td className="border p-2">{letter.letterInfo}</td>
+                  <td className="border p-2">{letter.issuedBy}</td>
+                  <td className="border p-2">{letter.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {/* باقي الصفحة */}
+      <div className={showPrint ? "hidden" : ""}>
         {/* Personal Image Section */}
         <div className="w-1/4">
           <div className="border-2 border-red-500 p-2 text-center rounded-lg dark:border-red-400">
