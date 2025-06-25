@@ -175,6 +175,7 @@ export default function StudentRecord() {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-black">
                   {index + 1}. {student.personalInfo.name} {student.personalInfo.fatherName || ''}
+                  <span className="text-xs text-gray-500 ml-2">({student.id})</span>
                 </h3>
               </div>
               <div className="space-y-2">

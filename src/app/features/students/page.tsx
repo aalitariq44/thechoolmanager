@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { ReactNode, useEffect, useState } from 'react';
 import { db } from '../../../firebase/config'; // تأكد من صحة مسار الاستيراد
 import { useRouter } from 'next/navigation';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface StudentData {
   id: string;
@@ -20,6 +21,28 @@ interface StudentData {
     leaveDate?: string;
   };
 }
+
+const CLASS_OPTIONS = [
+  'الأول الابتدائي',
+  'الثاني الابتدائي',
+  'الثالث الابتدائي',
+  'الرابع الابتدائي',
+  'الخامس الابتدائي',
+  'السادس الابتدائي',
+  'الأول المتوسط',
+  'الثاني المتوسط',
+  'الثالث المتوسط',
+  'الرابع العلمي',
+  'الخامس العلمي',
+  'السادس العلمي',
+  'الرابع الأدبي',
+  'الخامس الأدبي',
+  'السادس الأدبي'
+];
+
+const SECTION_OPTIONS = [
+  'أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'
+];
 
 export default function StudentRecord() {
   const [students, setStudents] = useState<StudentData[]>([]);
@@ -84,6 +107,84 @@ export default function StudentRecord() {
       return direction * (regNumA - regNumB);
     }
   });
+
+  // دالة لتحديث الصف في قاعدة البيانات
+  const handleClassChange = async (studentId: string, newClass: string) => {
+    try {
+      const studentRef = doc(db, 'students', studentId);
+      await updateDoc(studentRef, {
+        'personalInfo.currentClass': newClass
+      });
+      // تحديث الحالة محليًا
+      setStudents(prev =>
+        prev.map(s =>
+          s.id === studentId
+            ? {
+                ...s,
+                personalInfo: {
+                  ...s.personalInfo,
+                  currentClass: newClass
+                }
+              }
+            : s
+        )
+      );
+    } catch (error) {
+      alert('حدث خطأ أثناء تحديث الصف');
+    }
+  };
+
+  // دالة لإزالة الصف والشعبة من قاعدة البيانات
+  const handleRemoveClass = async (studentId: string) => {
+    try {
+      const studentRef = doc(db, 'students', studentId);
+      await updateDoc(studentRef, {
+        'personalInfo.currentClass': '',
+        'personalInfo.currentSection': ''
+      });
+      setStudents(prev =>
+        prev.map(s =>
+          s.id === studentId
+            ? {
+                ...s,
+                personalInfo: {
+                  ...s.personalInfo,
+                  currentClass: '',
+                  currentSection: ''
+                }
+              }
+            : s
+        )
+      );
+    } catch (error) {
+      alert('حدث خطأ أثناء إزالة الصف');
+    }
+  };
+
+  // دالة لتحديث الشعبة في قاعدة البيانات
+  const handleSectionChange = async (studentId: string, newSection: string) => {
+    try {
+      const studentRef = doc(db, 'students', studentId);
+      await updateDoc(studentRef, {
+        'personalInfo.currentSection': newSection
+      });
+      setStudents(prev =>
+        prev.map(s =>
+          s.id === studentId
+            ? {
+                ...s,
+                personalInfo: {
+                  ...s.personalInfo,
+                  currentSection: newSection
+                }
+              }
+            : s
+        )
+      );
+    } catch (error) {
+      alert('حدث خطأ أثناء تحديث الشعبة');
+    }
+  };
 
   if (loading) {
     return (
@@ -182,9 +283,74 @@ export default function StudentRecord() {
                   <span className="text-gray-600">رقم القيد:</span>
                   <span>{student.personalInfo.registrationNumber}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">الصف الحالي والشعبة:</span>
-                  <span>{student.personalInfo.currentClass || 'غير محدد'} {student.personalInfo.currentSection ? `(${student.personalInfo.currentSection})` : ''}</span>
+                  {/* إذا الصف غير محدد، أظهر قائمة منسدلة */}
+                  {(!student.personalInfo.currentClass || student.personalInfo.currentClass === 'غير محدد') ? (
+                    <select
+                      className="p-1 rounded border text-black"
+                      value=""
+                      onClick={e => e.stopPropagation()}
+                      onChange={e => {
+                        e.stopPropagation();
+                        handleClassChange(student.id, e.target.value);
+                      }}
+                    >
+                      <option value="" disabled>اختر الصف</option>
+                      {CLASS_OPTIONS.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      {student.personalInfo.currentClass}
+                      {/* إذا لم تكن الشعبة موجودة، أظهر قائمة منسدلة لاختيار الشعبة */}
+                      {!student.personalInfo.currentSection ? (
+                        <select
+                          className="ml-2 p-1 rounded border text-black"
+                          value=""
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => {
+                            e.stopPropagation();
+                            handleSectionChange(student.id, e.target.value);
+                          }}
+                        >
+                          <option value="" disabled>اختر الشعبة</option>
+                          {SECTION_OPTIONS.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span>({student.personalInfo.currentSection})</span>
+                      )}
+                      <button
+                        className="ml-1 p-1 rounded hover:bg-red-100"
+                        title="إزالة الصف"
+                        style={{ lineHeight: 0 }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleRemoveClass(student.id);
+                        }}
+                      >
+                        {/* أيقونة سلة حذف صغيرة */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          stroke="red"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="inline"
+                        >
+                          <rect x="5" y="7" width="10" height="9" rx="2" />
+                          <path d="M3 7h14M8 7V5a2 2 0 0 1 4 0v2" />
+                        </svg>
+                      </button>
+                    </span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">تاريخ الميلاد:</span>

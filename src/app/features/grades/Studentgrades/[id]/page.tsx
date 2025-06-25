@@ -43,6 +43,7 @@ interface SubjectGrade {
 
 interface GradeData {
     subjects: SubjectGrade[];
+    studentClass?: string; // الصف المخزن مع الدرجات
 }
 
 interface StudentInfo {
@@ -60,9 +61,11 @@ export default function StudentGrades() {
         subjects: SUBJECTS.map(subject => ({
             subject,
             grades: Object.fromEntries(COLUMNS.map(col => [col, col === 'الملاحظات' ? '' : '']))
-        }))
+        })),
+        studentClass: '', // إضافة خاصية الصف
     });
     const [loading, setLoading] = useState(true);
+    const [classMismatch, setClassMismatch] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -85,15 +88,32 @@ export default function StudentGrades() {
                 }
 
                 if (gradesDoc.exists()) {
-                    setGrades(gradesDoc.data() as GradeData);
+                    const data = gradesDoc.data() as GradeData;
+                    const storedClass = data.studentClass || (studentDoc.exists() ? studentDoc.data().personalInfo.currentClass : '');
+                    setGrades({
+                        ...data,
+                        studentClass: storedClass,
+                    });
+                    // تحقق من اختلاف الصف
+                    if (
+                        studentDoc.exists() &&
+                        storedClass &&
+                        studentDoc.data().personalInfo.currentClass &&
+                        storedClass !== studentDoc.data().personalInfo.currentClass
+                    ) {
+                        setClassMismatch(true);
+                    } else {
+                        setClassMismatch(false);
+                    }
                 } else {
-                    // إذا لم توجد درجات، أبقِ القيم الافتراضية
                     setGrades({
                         subjects: SUBJECTS.map(subject => ({
                             subject,
                             grades: Object.fromEntries(COLUMNS.map(col => [col, col === 'الملاحظات' ? '' : '']))
-                        }))
+                        })),
+                        studentClass: studentDoc.exists() ? studentDoc.data().personalInfo.currentClass : '',
                     });
+                    setClassMismatch(false);
                 }
 
                 setLoading(false);
@@ -127,11 +147,42 @@ export default function StudentGrades() {
 
     const saveGrades = async () => {
         try {
-            await setDoc(doc(db, `students/${id}/grades/${gradesYear}`), grades);
+            // إضافة الصف الحالي مع الدرجات
+            await setDoc(
+                doc(db, `students/${id}/grades/${gradesYear}`),
+                { ...grades, studentClass: studentInfo?.currentClass || '' }
+            );
             alert('تم حفظ الدرجات بنجاح');
         } catch (error) {
             console.error('Error saving grades:', error);
             alert('حدث خطأ أثناء حفظ الدرجات');
+        }
+    };
+
+    // حذف الدرجات السابقة والبدء من جديد
+    const handleDeleteGrades = async () => {
+        try {
+            await setDoc(
+                doc(db, `students/${id}/grades/${gradesYear}`),
+                {
+                    subjects: SUBJECTS.map(subject => ({
+                        subject,
+                        grades: Object.fromEntries(COLUMNS.map(col => [col, col === 'الملاحظات' ? '' : '']))
+                    })),
+                    studentClass: studentInfo?.currentClass || ''
+                }
+            );
+            setGrades({
+                subjects: SUBJECTS.map(subject => ({
+                    subject,
+                    grades: Object.fromEntries(COLUMNS.map(col => [col, col === 'الملاحظات' ? '' : '']))
+                })),
+                studentClass: studentInfo?.currentClass || ''
+            });
+            setClassMismatch(false);
+            alert('تم حذف الدرجات السابقة ويمكنك الآن إدخال الدرجات للصف الحالي.');
+        } catch (error) {
+            alert('حدث خطأ أثناء حذف الدرجات.');
         }
     };
 
@@ -155,6 +206,55 @@ export default function StudentGrades() {
         );
     }
 
+    // تحقق من وجود الصف
+    if (!studentInfo.currentClass || studentInfo.currentClass.trim() === '') {
+        return (
+            <div className="container mx-auto p-4 text-center" dir="rtl">
+                <div className="flex items-center justify-center min-h-[200px] text-red-600 dark:text-red-400 font-bold">
+                    يجب تحديد الصف في قائمة الطلاب ثم الدخول مرة اخرى
+                </div>
+            </div>
+        );
+    }
+
+    // تحقق من اختلاف الصف بين الدرجات المخزنة والصف الحالي
+    if (classMismatch && grades.studentClass && studentInfo.currentClass && grades.studentClass !== studentInfo.currentClass) {
+        return (
+            <div className="container mx-auto p-4 text-center" dir="rtl">
+                <div className="flex flex-col items-center justify-center min-h-[200px] text-red-700 dark:text-red-400 font-bold gap-4">
+                    <div>
+                        <span>هناك درجات مخزنة للطالب في صف مختلف.</span>
+                        <br />
+                        <span>
+                            الصف المخزن مع الدرجات: <span className="text-blue-700 dark:text-blue-300">{grades.studentClass}</span>
+                        </span>
+                        <br />
+                        <span>
+                            الصف الحالي للطالب: <span className="text-blue-700 dark:text-blue-300">{studentInfo.currentClass}</span>
+                        </span>
+                    </div>
+                    <div className="text-base font-normal text-gray-700 dark:text-gray-200">
+                        يرجى اختيار أحد الخيارين:
+                    </div>
+                    <div className="flex flex-col gap-2 w-full max-w-xs">
+                        <button
+                            onClick={handleDeleteGrades}
+                            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors font-bold"
+                        >
+                            حذف الدرجات السابقة والبدء من جديد
+                        </button>
+                        <button
+                            onClick={() => window.history.back()}
+                            className="bg-gray-300 text-gray-900 px-4 py-2 rounded hover:bg-gray-400 transition-colors font-bold"
+                        >
+                            الرجوع وتغيير صف الطالب ليطابق الصف المخزن مع الدرجات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto p-4 bg-white dark:bg-gray-900" dir="rtl">
             <div className="mb-6">
@@ -162,13 +262,26 @@ export default function StudentGrades() {
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         درجات الطالب: {studentInfo.name} {studentInfo.fatherName || ''}
                     </h1>
+                    {/* صف علوي: زر الحفظ + العام الدراسي */}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={saveGrades}
+                            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-bold shadow text-lg"
+                        >
+                            حفظ الدرجات
+                        </button>
+
+                    </div>
+                </div>
+                {/* صف سفلي: الصف والشعبة */}
+                <div className="mt-2 flex items-center justify-between flex-wrap gap-2">
+                    <p className="text-gray-600 dark:text-gray-400">
+                        الصف: {studentInfo.currentClass} - الشعبة: {studentInfo.currentSection}
+                    </p>
                     <h2 className="text-lg font-semibold text-blue-700 dark:text-blue-300">
                         العام الدراسي: {gradesYear}
                     </h2>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400">
-                    الصف: {studentInfo.currentClass} - الشعبة: {studentInfo.currentSection}
-                </p>
             </div>
 
             <div className="overflow-x-auto">
@@ -212,15 +325,6 @@ export default function StudentGrades() {
                         ))}
                     </tbody>
                 </table>
-            </div>
-
-            <div className="mt-8 text-center">
-                <button
-                    onClick={saveGrades}
-                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-bold shadow text-lg"
-                >
-                    حفظ الدرجات
-                </button>
             </div>
         </div>
     );
