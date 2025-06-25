@@ -155,9 +155,37 @@ function Sidebar(): JSX.Element {
           </svg>
           <span className="text-gray-700 dark:text-gray-300">الصفوف والشعب</span>
         </div>
-
-
-
+        {/* عيادة مرضية */}
+        <div onClick={() => router.push('/features/clinic')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
+          {/* clinic icon */}
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="8" width="18" height="13" rx="2" />
+            <path d="M8 8V6a4 4 0 018 0v2" />
+            <path d="M12 12v4" />
+            <path d="M10 14h4" />
+          </svg>
+          <span className="text-gray-700 dark:text-gray-300">العيادة المرضية</span>
+        </div>
+        {/* ارسال درجات */}
+        <div onClick={() => router.push('/features/send-grades')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
+          {/* send grades icon */}
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 2L11 13" />
+            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+          </svg>
+          <span className="text-gray-700 dark:text-gray-300">ارسال الدرجات</span>
+        </div>
+        {/* دفتر الخطة */}
+        <div onClick={() => router.push('/features/plan-book')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
+          {/* plan book icon */}
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <path d="M8 4v16" />
+            <path d="M16 4v16" />
+            <path d="M4 8h16" />
+          </svg>
+          <span className="text-gray-700 dark:text-gray-300">دفتر الخطة</span>
+        </div>
         {/* قسم الإعدادات */}
         <div className="mt-6 mb-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           الإعدادات
