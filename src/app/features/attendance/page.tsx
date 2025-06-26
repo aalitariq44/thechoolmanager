@@ -451,23 +451,39 @@ export default function StudentRecord() {
                 </div>
               </div>
 
+              {/* إزالة حقل التاريخ من البطاقة، وإظهار حقل التاريخ فقط عند الضغط على زر إضافة غياب */}
               <div className="mt-4 flex flex-col gap-2">
-                <label className="text-sm">تاريخ الغياب:</label>
-                <input
-                  type="date"
-                  className="border rounded p-1 text-black"
-                  value={absenceDates[student.id] || ''}
-                  onChange={e => setAbsenceDates(prev => ({ ...prev, [student.id]: e.target.value }))}
-                  onClick={e => e.stopPropagation()} // منع فتح النافذة عند الضغط على حقل التاريخ
-                />
+                {/* زر إضافة غياب */}
                 <button
                   className="bg-red-500 text-white px-3 py-1 rounded disabled:opacity-50"
-                  onClick={e => { e.stopPropagation(); handleAddAbsence(student.id); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    // إذا لم يوجد تاريخ، أظهر رسالة الخطأ
+                    if (!absenceDates[student.id]) {
+                      setError(prev => ({ ...prev, [student.id]: 'يرجى إدخال التاريخ' }));
+                    } else {
+                      setError(prev => ({ ...prev, [student.id]: null }));
+                      handleAddAbsence(student.id);
+                    }
+                  }}
                   disabled={saving[student.id]}
                 >
                   {saving[student.id] ? 'جاري الحفظ...' : 'إضافة غياب'}
                 </button>
-                {error[student.id] && <span className="text-red-600 text-xs">{error[student.id]}</span>}
+                {/* إذا ضغط المستخدم على إضافة غياب ولم يدخل تاريخ، أظهر حقل التاريخ ورسالة الخطأ */}
+                {error[student.id] && (
+                  <div className="flex flex-col gap-1">
+                    <input
+                      type="date"
+                      className="border rounded p-1 text-black"
+                      value={absenceDates[student.id] || ''}
+                      onChange={e => setAbsenceDates(prev => ({ ...prev, [student.id]: e.target.value }))}
+                      onClick={e => e.stopPropagation()}
+                      autoFocus
+                    />
+                    <span className="text-red-600 text-xs">{error[student.id]}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between mt-2">
@@ -501,20 +517,35 @@ export default function StudentRecord() {
                   <td className="py-2 px-4 border font-bold text-red-600">{absencesCount[student.id] || 0}</td>
                   <td className="py-2 px-4 border">
                     <div className="flex flex-col gap-1" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="date"
-                        className="border rounded p-1 text-black"
-                        value={absenceDates[student.id] || ''}
-                        onChange={e => setAbsenceDates(prev => ({ ...prev, [student.id]: e.target.value }))}
-                      />
+                      {/* زر إضافة غياب فقط */}
                       <button
                         className="bg-red-500 text-white px-2 py-1 rounded text-xs disabled:opacity-50"
-                        onClick={() => handleAddAbsence(student.id)}
+                        onClick={() => {
+                          // إذا لم يوجد تاريخ، أظهر رسالة الخطأ وحقل التاريخ
+                          if (!absenceDates[student.id]) {
+                            setError(prev => ({ ...prev, [student.id]: 'يرجى إدخال التاريخ' }));
+                          } else {
+                            setError(prev => ({ ...prev, [student.id]: null }));
+                            handleAddAbsence(student.id);
+                          }
+                        }}
                         disabled={saving[student.id]}
                       >
                         {saving[student.id] ? 'جاري الحفظ...' : 'إضافة'}
                       </button>
-                      {error[student.id] && <span className="text-red-600 text-xs">{error[student.id]}</span>}
+                      {/* إذا ضغط المستخدم على إضافة غياب ولم يدخل تاريخ، أظهر حقل التاريخ ورسالة الخطأ */}
+                      {error[student.id] && (
+                        <div className="flex flex-col gap-1 mt-1">
+                          <input
+                            type="date"
+                            className="border rounded p-1 text-black"
+                            value={absenceDates[student.id] || ''}
+                            onChange={e => setAbsenceDates(prev => ({ ...prev, [student.id]: e.target.value }))}
+                            autoFocus
+                          />
+                          <span className="text-red-600 text-xs">{error[student.id]}</span>
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
