@@ -352,10 +352,11 @@ export default function StudentRecord() {
                     </span>
                   )}
                 </div>
-                <div className="flex justify-between">
+                {/* حذف تاريخ الميلاد من البطاقة */}
+                {/* <div className="flex justify-between">
                   <span className="text-gray-600">تاريخ الميلاد:</span>
                   <span>{student.personalInfo.birthDate}</span>
-                </div>
+                </div> */}
               </div>
             </div>
           ))}
@@ -369,7 +370,7 @@ export default function StudentRecord() {
                 <th className="py-2 px-4 border">الاسم</th>
                 <th className="py-2 px-4 border">رقم القيد</th>
                 <th className="py-2 px-4 border">الصف الحالي والشعبة</th>
-                <th className="py-2 px-4 border">تاريخ الميلاد</th>
+                {/* <th className="py-2 px-4 border">تاريخ الميلاد</th> */}
               </tr>
             </thead>
             <tbody>
@@ -386,7 +387,7 @@ export default function StudentRecord() {
                     {student.personalInfo.currentClass || 'غير محدد'} 
                     {student.personalInfo.currentSection ? `(${student.personalInfo.currentSection})` : ''}
                   </td>
-                  <td className="py-2 px-4 border">{student.personalInfo.birthDate}</td>
+                  {/* <td className="py-2 px-4 border">{student.personalInfo.birthDate}</td> */}
                 </tr>
               ))}
             </tbody>

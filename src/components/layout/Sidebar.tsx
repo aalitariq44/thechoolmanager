@@ -22,6 +22,19 @@ function Sidebar(): JSX.Element {
 
   return (
     <div className="fixed top-0 right-0 w-64 h-full bg-white dark:bg-gray-800 shadow-lg p-4 text-right overflow-y-auto">
+      {/* User Email at the Top */}
+      <div className="flex items-center justify-end mb-4 gap-2">
+        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
+          {/* user icon */}
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+        </span>
+        <span className="text-gray-700 dark:text-gray-300">{user?.email}</span>
+        
+      </div>
+
       <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">لوحة التحكم</h2>
 
       {/* Navigation Links */}
@@ -202,8 +215,6 @@ function Sidebar(): JSX.Element {
 
       {/* User Account Section */}
       <div className="mt-auto">
-        <p className="mb-4 text-gray-700 dark:text-gray-300">{user?.email}</p>
-
         <div
           onClick={() => router.push('/features/users')}
           className="w-full text-right bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 p-2 rounded transition-colors duration-200 mb-2 cursor-pointer"
