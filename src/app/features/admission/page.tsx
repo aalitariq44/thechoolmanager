@@ -63,8 +63,10 @@ export default function AdmissionPage() {
     address: '',
     phone: '',
     logoUrl: '',
-    managerName: '', // إضافة اسم المدير
+    managerName: '',
   });
+  // أضف حالة لتخزين الشعار كـ DataURL
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   // تأثير لجلب البيانات من Firebase
   useEffect(() => {
@@ -105,8 +107,25 @@ export default function AdmissionPage() {
             address: data.address || '',
             phone: data.phone || '',
             logoUrl: data.logoUrl || '',
-            managerName: data.managerName || '', // جلب اسم المدير
+            managerName: data.managerName || '',
           });
+
+          // تحميل الشعار كـ DataURL إذا وجد
+          if (data.logoUrl) {
+            try {
+              const response = await fetch(data.logoUrl, { mode: 'cors' });
+              const blob = await response.blob();
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                setLogoDataUrl(reader.result as string);
+              };
+              reader.readAsDataURL(blob);
+            } catch {
+              setLogoDataUrl(null);
+            }
+          } else {
+            setLogoDataUrl(null);
+          }
         }
       } catch (e) {
         // يمكن تجاهل الخطأ أو عرضه
@@ -576,11 +595,11 @@ export default function AdmissionPage() {
                 </div>
               </div>
               <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                {schoolSettings.logoUrl ? (
-                  <img 
-                    src={schoolSettings.logoUrl} 
-                    alt="شعار المدرسة" 
-                    style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '50%', background: '#fff', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} 
+                {logoDataUrl ? (
+                  <img
+                    src={logoDataUrl}
+                    alt="شعار المدرسة"
+                    style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '50%', background: '#fff', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
                   />
                 ) : (
                   <div style={{ width: '80px', height: '80px', background: '#eee', borderRadius: '50%' }} />

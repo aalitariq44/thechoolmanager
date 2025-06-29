@@ -1,7 +1,7 @@
 'use client';
 
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { auth, db } from '../firebase/config';
@@ -28,30 +28,34 @@ export default function SchoolDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Get current students (without leave date)
-    const studentsQuery = query(
-      collection(db, 'students'),
-      where('personalInfo.leaveDate', '==', '')
-    );
+    // Get current students count (aggregation query)
+    const fetchCounts = async () => {
+      setStudentCountLoading(true);
+      setTeacherCountLoading(true);
 
-    setStudentCountLoading(true);
-    const studentsUnsubscribe = onSnapshot(studentsQuery, (snapshot) => {
-      setStudentCount(snapshot.docs.length);
-      setStudentCountLoading(false);
-    });
+      try {
+        // Aggregation Query for students
+        const studentsQuery = query(
+          collection(db, 'students'),
+          where('personalInfo.leaveDate', '==', '')
+        );
+        const studentsSnapshot = await getCountFromServer(studentsQuery);
+        setStudentCount(studentsSnapshot.data().count);
 
-    // Get all teachers
-    const teachersQuery = query(collection(db, 'teachers'));
-    setTeacherCountLoading(true);
-    const teachersUnsubscribe = onSnapshot(teachersQuery, (snapshot) => {
-      setTeacherCount(snapshot.docs.length);
-      setTeacherCountLoading(false);
-    });
-
-    return () => {
-      studentsUnsubscribe();
-      teachersUnsubscribe();
+        // Aggregation Query for teachers
+        const teachersQuery = collection(db, 'teachers');
+        const teachersSnapshot = await getCountFromServer(teachersQuery);
+        setTeacherCount(teachersSnapshot.data().count);
+      } catch (error) {
+        setStudentCount(0);
+        setTeacherCount(0);
+      } finally {
+        setStudentCountLoading(false);
+        setTeacherCountLoading(false);
+      }
     };
+
+    fetchCounts();
   }, [user]);
 
   if (loading) {
