@@ -147,569 +147,583 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="container mx-auto p-6 bg-white dark:bg-gray-800" dir="rtl">
-      {/* زر الطباعة */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-          {isEditing ? 'تعديل بيانات المدرس' : 'عرض بيانات المدرس'}
-        </h1>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className={`px-4 py-2 rounded text-white ${
-              isEditing ? 'bg-gray-500' : 'bg-blue-500'
-            }`}
-          >
-            {isEditing ? 'إلغاء التعديل' : 'تعديل البيانات'}
-          </button>
-          {isEditing && (
+    <>
+      {/* إخفاء ترويسة وتذييل الطباعة في المتصفح */}
+      <style>
+        {`@media print {
+          @page {
+            margin: 0;
+            size: auto;
+          }
+          body {
+            margin: 0;
+          }
+        }`}
+      </style>
+      <div className="container mx-auto p-6 bg-white dark:bg-gray-800" dir="rtl">
+        {/* زر الطباعة */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+            {isEditing ? 'تعديل بيانات المدرس' : 'عرض بيانات المدرس'}
+          </h1>
+          <div className="flex gap-2">
             <button
-              onClick={handleSave}
-              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={() => setIsEditing(!isEditing)}
+              className={`px-4 py-2 rounded text-white ${
+                isEditing ? 'bg-gray-500' : 'bg-blue-500'
+              }`}
             >
-              حفظ التغييرات
+              {isEditing ? 'إلغاء التعديل' : 'تعديل البيانات'}
             </button>
-          )}
-          {/* زر الطباعة */}
-          <button
-            onClick={handlePrint}
-            className="bg-yellow-500 text-white px-4 py-2 rounded print:hidden"
-          >
-            طباعة البيانات
-          </button>
-        </div>
-      </div>
-
-      {/* نسخة الطباعة */}
-      {showPrint && (
-        <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
-          <h2 className="text-2xl font-bold mb-4 text-center">بيانات المدرس</h2>
-          <table className="w-full mb-4 border">
-            <tbody>
-              <tr>
-                <td className="border p-2 font-semibold">الاسم الرباعي واللقب</td>
-                <td className="border p-2">{teacher.fullName}</td>
-                <td className="border p-2 font-semibold">اسم الأم الثلاثي</td>
-                <td className="border p-2">{teacher.motherName}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">تاريخ الميلاد</td>
-                <td className="border p-2">{teacher.birthDate}</td>
-                <td className="border p-2 font-semibold">محل الولادة</td>
-                <td className="border p-2">{teacher.birthPlace}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">رقم الهاتف</td>
-                <td className="border p-2">{teacher.phoneNumber}</td>
-                <td className="border p-2 font-semibold">فصيلة الدم</td>
-                <td className="border p-2">{teacher.bloodType}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">الحالة الزوجية</td>
-                <td className="border p-2">{teacher.maritalStatus}</td>
-                <td className="border p-2 font-semibold">عنوان السكن</td>
-                <td className="border p-2">{teacher.address}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">اقرب نقطة دالة</td>
-                <td className="border p-2">{teacher.landmark}</td>
-                <td className="border p-2 font-semibold">رقم الجنسية</td>
-                <td className="border p-2">{teacher.nationalId}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">رقم بطاقة السكن</td>
-                <td className="border p-2">{teacher.residenceCardNumber}</td>
-                <td className="border p-2 font-semibold">رقم البطاقة التموينية</td>
-                <td className="border p-2">{teacher.rationCardNumber}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">الشهادة</td>
-                <td className="border p-2">{teacher.certificate}</td>
-                <td className="border p-2 font-semibold">الجامعة</td>
-                <td className="border p-2">{teacher.university}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">الكلية</td>
-                <td className="border p-2">{teacher.college}</td>
-                <td className="border p-2 font-semibold">الاختصاص</td>
-                <td className="border p-2">{teacher.specialization}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">سنة التخرج</td>
-                <td className="border p-2">{teacher.graduationYear}</td>
-                <td className="border p-2 font-semibold">رقم أمر التعيين</td>
-                <td className="border p-2">{teacher.appointmentOrderNumber}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">تاريخ أمر التعيين</td>
-                <td className="border p-2">{teacher.appointmentOrderDate}</td>
-                <td className="border p-2 font-semibold">تاريخ المباشرة بالوظيفة</td>
-                <td className="border p-2">{teacher.jobStartDate}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">العنوان الوظيفي</td>
-                <td className="border p-2">{teacher.jobTitle}</td>
-                <td className="border p-2 font-semibold">اسم الزوج/ة</td>
-                <td className="border p-2">{teacher.husbandsName}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">وظيفة الزوج/ة</td>
-                <td className="border p-2">{teacher.spouseOccupation}</td>
-                <td className="border p-2 font-semibold">تاريخ الزواج</td>
-                <td className="border p-2">{teacher.marriageDate}</td>
-              </tr>
-              <tr>
-                <td className="border p-2 font-semibold">عدد الأطفال</td>
-                <td className="border p-2">{teacher.numberOfChildren}</td>
-                <td className="border p-2"></td>
-                <td className="border p-2"></td>
-              </tr>
-            </tbody>
-          </table>
-          {/* الدورات التدريبية */}
-          <h3 className="text-lg font-semibold mb-2">الدورات التدريبية</h3>
-          <table className="w-full mb-4 border">
-            <thead>
-              <tr>
-                <th className="border p-2">اسم الدورة</th>
-                <th className="border p-2">المدة</th>
-                <th className="border p-2">المكان</th>
-                <th className="border p-2">التقدير</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teacher.trainingCourses?.map((course, idx) => (
-                <tr key={idx}>
-                  <td className="border p-2">{course.name}</td>
-                  <td className="border p-2">{course.duration}</td>
-                  <td className="border p-2">{course.location}</td>
-                  <td className="border p-2">{course.grade}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {/* كتب الشكر */}
-          <h3 className="text-lg font-semibold mb-2">كتب الشكر</h3>
-          <table className="w-full border">
-            <thead>
-              <tr>
-                <th className="border p-2">رقم وتاريخ الكتاب</th>
-                <th className="border p-2">صادر من</th>
-                <th className="border p-2">السبب</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teacher.appreciationLetters?.map((letter, idx) => (
-                <tr key={idx}>
-                  <td className="border p-2">{letter.letterInfo}</td>
-                  <td className="border p-2">{letter.issuedBy}</td>
-                  <td className="border p-2">{letter.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {/* باقي الصفحة */}
-      <div className={showPrint ? "hidden" : ""}>
-        {/* Personal Image + Main Form Section in flex */}
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Personal Image Section */}
-          <div className="md:w-1/4 w-full mb-4 md:mb-0">
-            <div className="border-2 border-red-500 p-2 text-center rounded-lg dark:border-red-400 bg-white dark:bg-gray-700">
-              <p className="text-red-500 mb-2 font-semibold dark:text-red-400">الصورة الشخصية</p>
-              <div className="h-48 w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <svg
-                  className="w-24 h-24 text-gray-400 dark:text-gray-500"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                </svg>
-              </div>
-            </div>
+            {isEditing && (
+              <button
+                onClick={handleSave}
+                className="bg-green-500 text-white px-4 py-2 rounded"
+              >
+                حفظ التغييرات
+              </button>
+            )}
+            {/* زر الطباعة */}
+            <button
+              onClick={handlePrint}
+              className="bg-yellow-500 text-white px-4 py-2 rounded print:hidden"
+            >
+              طباعة البيانات
+            </button>
           </div>
+        </div>
 
-          {/* Main Form Section */}
-          <div className="md:w-3/4 w-full space-y-4">
-            {/* Personal Information */}
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                className="border p-2 rounded text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                placeholder="الاسم الرباعي واللقب"
-                value={teacher?.fullName}
-                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                disabled={!isEditing}
-              />
-              <input
-                className="border p-2 rounded text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                placeholder="اسم الأم الثلاثي"
-                value={teacher?.motherName}
-                onChange={(e) => handleInputChange('motherName', e.target.value)}
-                disabled={!isEditing}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ الميلاد</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.birthDate}
-                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">محل الولادة</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.birthPlace}
-                  onChange={(e) => handleInputChange('birthPlace', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">رقم الهاتف</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.phoneNumber}
-                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">فصيلة الدم</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.bloodType}
-                  onChange={(e) => handleInputChange('bloodType', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">الحالة الزوجية</label>
-                <select
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.maritalStatus}
-                  onChange={(e) => handleInputChange('maritalStatus', e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <option value="">اختر الحالة</option>
-                  <option value="متزوج">متزوج/ة</option>
-                  <option value="اعزب">أعزب/عزباء</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Address Information */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">عنوان السكن</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">اقرب نقطة دالة</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.landmark}
-                  onChange={(e) => handleInputChange('landmark', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            {/* ID Information */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">رقم الجنسية</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.nationalId}
-                  onChange={(e) => handleInputChange('nationalId', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">رقم بطاقة السكن</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.residenceCardNumber}
-                  onChange={(e) => handleInputChange('residenceCardNumber', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">رقم البطاقة التموينية</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.rationCardNumber}
-                  onChange={(e) => handleInputChange('rationCardNumber', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            {/* Education Information */}
-            <div className="grid grid-cols-4 gap-4">
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">الشهادة</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.certificate}
-                  onChange={(e) => handleInputChange('certificate', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">الجامعة</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.university}
-                  onChange={(e) => handleInputChange('university', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">الكلية</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.college}
-                  onChange={(e) => handleInputChange('college', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">الاختصاص</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.specialization}
-                  onChange={(e) => handleInputChange('specialization', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">سنة التخرج</label>
-                <select
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.graduationYear}
-                  onChange={(e) => handleInputChange('graduationYear', e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <option value="">اختر السنة</option>
-                  {graduationYears.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Appointment Information */}
-            <div className="border p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">معلومات التعيين</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <label className="mb-1 text-gray-700 dark:text-gray-200">رقم أمر التعيين</label>
-                  <input
-                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    value={teacher.appointmentOrderNumber}
-                    onChange={(e) => handleInputChange('appointmentOrderNumber', e.target.value)}
-                    disabled={!isEditing}
-                  />
+        {/* نسخة الطباعة */}
+        {showPrint && (
+          <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
+            <h2 className="text-2xl font-bold mb-4 text-center">بيانات المدرس</h2>
+            <table className="w-full mb-4 border">
+              <tbody>
+                <tr>
+                  <td className="border p-2 font-semibold">الاسم الرباعي واللقب</td>
+                  <td className="border p-2">{teacher.fullName}</td>
+                  <td className="border p-2 font-semibold">اسم الأم الثلاثي</td>
+                  <td className="border p-2">{teacher.motherName}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">تاريخ الميلاد</td>
+                  <td className="border p-2">{teacher.birthDate}</td>
+                  <td className="border p-2 font-semibold">محل الولادة</td>
+                  <td className="border p-2">{teacher.birthPlace}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">رقم الهاتف</td>
+                  <td className="border p-2">{teacher.phoneNumber}</td>
+                  <td className="border p-2 font-semibold">فصيلة الدم</td>
+                  <td className="border p-2">{teacher.bloodType}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">الحالة الزوجية</td>
+                  <td className="border p-2">{teacher.maritalStatus}</td>
+                  <td className="border p-2 font-semibold">عنوان السكن</td>
+                  <td className="border p-2">{teacher.address}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">اقرب نقطة دالة</td>
+                  <td className="border p-2">{teacher.landmark}</td>
+                  <td className="border p-2 font-semibold">رقم الجنسية</td>
+                  <td className="border p-2">{teacher.nationalId}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">رقم بطاقة السكن</td>
+                  <td className="border p-2">{teacher.residenceCardNumber}</td>
+                  <td className="border p-2 font-semibold">رقم البطاقة التموينية</td>
+                  <td className="border p-2">{teacher.rationCardNumber}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">الشهادة</td>
+                  <td className="border p-2">{teacher.certificate}</td>
+                  <td className="border p-2 font-semibold">الجامعة</td>
+                  <td className="border p-2">{teacher.university}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">الكلية</td>
+                  <td className="border p-2">{teacher.college}</td>
+                  <td className="border p-2 font-semibold">الاختصاص</td>
+                  <td className="border p-2">{teacher.specialization}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">سنة التخرج</td>
+                  <td className="border p-2">{teacher.graduationYear}</td>
+                  <td className="border p-2 font-semibold">رقم أمر التعيين</td>
+                  <td className="border p-2">{teacher.appointmentOrderNumber}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">تاريخ أمر التعيين</td>
+                  <td className="border p-2">{teacher.appointmentOrderDate}</td>
+                  <td className="border p-2 font-semibold">تاريخ المباشرة بالوظيفة</td>
+                  <td className="border p-2">{teacher.jobStartDate}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">العنوان الوظيفي</td>
+                  <td className="border p-2">{teacher.jobTitle}</td>
+                  <td className="border p-2 font-semibold">اسم الزوج/ة</td>
+                  <td className="border p-2">{teacher.husbandsName}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">وظيفة الزوج/ة</td>
+                  <td className="border p-2">{teacher.spouseOccupation}</td>
+                  <td className="border p-2 font-semibold">تاريخ الزواج</td>
+                  <td className="border p-2">{teacher.marriageDate}</td>
+                </tr>
+                <tr>
+                  <td className="border p-2 font-semibold">عدد الأطفال</td>
+                  <td className="border p-2">{teacher.numberOfChildren}</td>
+                  <td className="border p-2"></td>
+                  <td className="border p-2"></td>
+                </tr>
+              </tbody>
+            </table>
+            {/* الدورات التدريبية */}
+            <h3 className="text-lg font-semibold mb-2">الدورات التدريبية</h3>
+            <table className="w-full mb-4 border">
+              <thead>
+                <tr>
+                  <th className="border p-2">اسم الدورة</th>
+                  <th className="border p-2">المدة</th>
+                  <th className="border p-2">المكان</th>
+                  <th className="border p-2">التقدير</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teacher.trainingCourses?.map((course, idx) => (
+                  <tr key={idx}>
+                    <td className="border p-2">{course.name}</td>
+                    <td className="border p-2">{course.duration}</td>
+                    <td className="border p-2">{course.location}</td>
+                    <td className="border p-2">{course.grade}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* كتب الشكر */}
+            <h3 className="text-lg font-semibold mb-2">كتب الشكر</h3>
+            <table className="w-full border">
+              <thead>
+                <tr>
+                  <th className="border p-2">رقم وتاريخ الكتاب</th>
+                  <th className="border p-2">صادر من</th>
+                  <th className="border p-2">السبب</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teacher.appreciationLetters?.map((letter, idx) => (
+                  <tr key={idx}>
+                    <td className="border p-2">{letter.letterInfo}</td>
+                    <td className="border p-2">{letter.issuedBy}</td>
+                    <td className="border p-2">{letter.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* باقي الصفحة */}
+        <div className={showPrint ? "hidden" : ""}>
+          {/* Personal Image + Main Form Section in flex */}
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Personal Image Section */}
+            <div className="md:w-1/4 w-full mb-4 md:mb-0">
+              <div className="border-2 border-red-500 p-2 text-center rounded-lg dark:border-red-400 bg-white dark:bg-gray-700">
+                <p className="text-red-500 mb-2 font-semibold dark:text-red-400">الصورة الشخصية</p>
+                <div className="h-48 w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  <svg
+                    className="w-24 h-24 text-gray-400 dark:text-gray-500"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                  </svg>
                 </div>
+              </div>
+            </div>
+
+            {/* Main Form Section */}
+            <div className="md:w-3/4 w-full space-y-4">
+              {/* Personal Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  className="border p-2 rounded text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="الاسم الرباعي واللقب"
+                  value={teacher?.fullName}
+                  onChange={(e) => handleInputChange('fullName', e.target.value)}
+                  disabled={!isEditing}
+                />
+                <input
+                  className="border p-2 rounded text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="اسم الأم الثلاثي"
+                  value={teacher?.motherName}
+                  onChange={(e) => handleInputChange('motherName', e.target.value)}
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
                 <div className="flex flex-col">
-                  <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ أمر التعيين</label>
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ الميلاد</label>
                   <input
                     type="date"
                     className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    value={teacher.appointmentOrderDate}
-                    onChange={(e) => handleInputChange('appointmentOrderDate', e.target.value)}
+                    value={teacher.birthDate}
+                    onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">محل الولادة</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.birthPlace}
+                    onChange={(e) => handleInputChange('birthPlace', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">رقم الهاتف</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.phoneNumber}
+                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">فصيلة الدم</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.bloodType}
+                    onChange={(e) => handleInputChange('bloodType', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">الحالة الزوجية</label>
+                  <select
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.maritalStatus}
+                    onChange={(e) => handleInputChange('maritalStatus', e.target.value)}
+                    disabled={!isEditing}
+                  >
+                    <option value="">اختر الحالة</option>
+                    <option value="متزوج">متزوج/ة</option>
+                    <option value="اعزب">أعزب/عزباء</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">عنوان السكن</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">اقرب نقطة دالة</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.landmark}
+                    onChange={(e) => handleInputChange('landmark', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
+
+              {/* ID Information */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">رقم الجنسية</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.nationalId}
+                    onChange={(e) => handleInputChange('nationalId', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">رقم بطاقة السكن</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.residenceCardNumber}
+                    onChange={(e) => handleInputChange('residenceCardNumber', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">رقم البطاقة التموينية</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.rationCardNumber}
+                    onChange={(e) => handleInputChange('rationCardNumber', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
+
+              {/* Education Information */}
+              <div className="grid grid-cols-4 gap-4">
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">الشهادة</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.certificate}
+                    onChange={(e) => handleInputChange('certificate', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">الجامعة</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.university}
+                    onChange={(e) => handleInputChange('university', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">الكلية</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.college}
+                    onChange={(e) => handleInputChange('college', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">الاختصاص</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.specialization}
+                    onChange={(e) => handleInputChange('specialization', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">سنة التخرج</label>
+                  <select
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.graduationYear}
+                    onChange={(e) => handleInputChange('graduationYear', e.target.value)}
+                    disabled={!isEditing}
+                  >
+                    <option value="">اختر السنة</option>
+                    {graduationYears.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Appointment Information */}
+              <div className="border p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">معلومات التعيين</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col">
+                    <label className="mb-1 text-gray-700 dark:text-gray-200">رقم أمر التعيين</label>
+                    <input
+                      className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      value={teacher.appointmentOrderNumber}
+                      onChange={(e) => handleInputChange('appointmentOrderNumber', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ أمر التعيين</label>
+                    <input
+                      type="date"
+                      className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      value={teacher.appointmentOrderDate}
+                      onChange={(e) => handleInputChange('appointmentOrderDate', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Job Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ المباشرة بالوظيفة</label>
+                  <input
+                    type="date"
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.jobStartDate}
+                    onChange={(e) => handleInputChange('jobStartDate', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">العنوان الوظيفي</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.jobTitle}
+                    onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
+
+              {/* Family Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">اسم الزوج/ة</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.husbandsName}
+                    onChange={(e) => handleInputChange('husbandsName', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">وظيفة الزوج/ة</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.spouseOccupation}
+                    onChange={(e) => handleInputChange('spouseOccupation', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ الزواج</label>
+                  <input
+                    type="date"
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.marriageDate}
+                    onChange={(e) => handleInputChange('marriageDate', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-gray-700 dark:text-gray-200">عدد الأطفال</label>
+                  <input
+                    className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    value={teacher.numberOfChildren}
+                    onChange={(e) => handleInputChange('numberOfChildren', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
               </div>
             </div>
-
-            {/* Job Information */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ المباشرة بالوظيفة</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.jobStartDate}
-                  onChange={(e) => handleInputChange('jobStartDate', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">العنوان الوظيفي</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.jobTitle}
-                  onChange={(e) => handleInputChange('jobTitle', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            {/* Family Information */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">اسم الزوج/ة</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.husbandsName}
-                  onChange={(e) => handleInputChange('husbandsName', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">وظيفة الزوج/ة</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.spouseOccupation}
-                  onChange={(e) => handleInputChange('spouseOccupation', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">تاريخ الزواج</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.marriageDate}
-                  onChange={(e) => handleInputChange('marriageDate', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="mb-1 text-gray-700 dark:text-gray-200">عدد الأطفال</label>
-                <input
-                  className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={teacher.numberOfChildren}
-                  onChange={(e) => handleInputChange('numberOfChildren', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* Training Courses Section */}
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">الدورات التدريبية</h3>
-        <table className="w-full border">
-          <thead className="bg-gray-50 dark:bg-gray-600">
-            <tr>
-              <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">اسم الدورة</th>
-              <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">المدة</th>
-              <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">المكان</th>
-              <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">التقدير</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teacher.trainingCourses?.map((course: TrainingCourse, index: number) => (
-              <tr key={index}>
-                <td className="border p-2 bg-white dark:bg-gray-700">
-                  <input
-                    className="w-full bg-transparent text-gray-900 dark:text-gray-100"
-                    value={course.name}
-                    onChange={(e) => handleTrainingCourseChange(index, 'name', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </td>
-                <td className="border p-2 bg-white dark:bg-gray-700">
-                  <input
-                    className="w-full bg-transparent text-gray-900 dark:text-gray-100"
-                    value={course.duration}
-                    onChange={(e) => handleTrainingCourseChange(index, 'duration', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </td>
-                <td className="border p-2 bg-white dark:bg-gray-700">
-                  <input
-                    className="w-full bg-transparent text-gray-900 dark:text-gray-100"
-                    value={course.location}
-                    onChange={(e) => handleTrainingCourseChange(index, 'location', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </td>
-                <td className="border p-2 bg-white dark:bg-gray-700">
-                  <input
-                    className="w-full bg-transparent text-gray-900 dark:text-gray-100"
-                    value={course.grade}
-                    onChange={(e) => handleTrainingCourseChange(index, 'grade', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </td>
+        {/* Training Courses Section */}
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">الدورات التدريبية</h3>
+          <table className="w-full border">
+            <thead className="bg-gray-50 dark:bg-gray-600">
+              <tr>
+                <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">اسم الدورة</th>
+                <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">المدة</th>
+                <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">المكان</th>
+                <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">التقدير</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Appreciation Letters Section */}
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">كتب الشكر</h3>
-        <table className="w-full border">
-          <thead className="bg-gray-50 dark:bg-gray-600">
-            <tr>
-              <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">رقم وتاريخ الكتاب</th>
-              <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">صادر من</th>
-              <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">السبب</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teacher.appreciationLetters?.map((letter: AppreciationLetter, index: number) => (
-              <tr key={index}>
-                <td className="border p-2 bg-white dark:bg-gray-700">
-                  <input
-                    className="w-full bg-transparent text-gray-900 dark:text-gray-100"
-                    value={letter.letterInfo}
-                    onChange={(e) => handleAppreciationLetterChange(index, 'letterInfo', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </td>
-                <td className="border p-2 bg-white dark:bg-gray-700">
-                  <input
-                    className="w-full bg-transparent text-gray-900 dark:text-gray-100"
-                    value={letter.issuedBy}
-                    onChange={(e) => handleAppreciationLetterChange(index, 'issuedBy', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </td>
-                <td className="border p-2 bg-white dark:bg-gray-700">
-                  <input
-                    className="w-full bg-transparent text-gray-900 dark:text-gray-100"
-                    value={letter.reason}
-                    onChange={(e) => handleAppreciationLetterChange(index, 'reason', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Status Message */}
-      {saveStatus && (
-        <div className={`mt-4 text-center ${
-          saveStatus.includes('نجاح') ? 'text-green-600 dark:text-green-400' : 
-          saveStatus.includes('خطأ') ? 'text-red-600 dark:text-red-400' : 
-          'text-blue-600 dark:text-blue-400'
-        }`}>
-          {saveStatus}
+            </thead>
+            <tbody>
+              {teacher.trainingCourses?.map((course: TrainingCourse, index: number) => (
+                <tr key={index}>
+                  <td className="border p-2 bg-white dark:bg-gray-700">
+                    <input
+                      className="w-full bg-transparent text-gray-900 dark:text-gray-100"
+                      value={course.name}
+                      onChange={(e) => handleTrainingCourseChange(index, 'name', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </td>
+                  <td className="border p-2 bg-white dark:bg-gray-700">
+                    <input
+                      className="w-full bg-transparent text-gray-900 dark:text-gray-100"
+                      value={course.duration}
+                      onChange={(e) => handleTrainingCourseChange(index, 'duration', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </td>
+                  <td className="border p-2 bg-white dark:bg-gray-700">
+                    <input
+                      className="w-full bg-transparent text-gray-900 dark:text-gray-100"
+                      value={course.location}
+                      onChange={(e) => handleTrainingCourseChange(index, 'location', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </td>
+                  <td className="border p-2 bg-white dark:bg-gray-700">
+                    <input
+                      className="w-full bg-transparent text-gray-900 dark:text-gray-100"
+                      value={course.grade}
+                      onChange={(e) => handleTrainingCourseChange(index, 'grade', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-    </div>
+
+        {/* Appreciation Letters Section */}
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">كتب الشكر</h3>
+          <table className="w-full border">
+            <thead className="bg-gray-50 dark:bg-gray-600">
+              <tr>
+                <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">رقم وتاريخ الكتاب</th>
+                <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">صادر من</th>
+                <th className="border p-2 bg-gray-50 dark:bg-gray-600 text-gray-800 dark:text-gray-200">السبب</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teacher.appreciationLetters?.map((letter: AppreciationLetter, index: number) => (
+                <tr key={index}>
+                  <td className="border p-2 bg-white dark:bg-gray-700">
+                    <input
+                      className="w-full bg-transparent text-gray-900 dark:text-gray-100"
+                      value={letter.letterInfo}
+                      onChange={(e) => handleAppreciationLetterChange(index, 'letterInfo', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </td>
+                  <td className="border p-2 bg-white dark:bg-gray-700">
+                    <input
+                      className="w-full bg-transparent text-gray-900 dark:text-gray-100"
+                      value={letter.issuedBy}
+                      onChange={(e) => handleAppreciationLetterChange(index, 'issuedBy', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </td>
+                  <td className="border p-2 bg-white dark:bg-gray-700">
+                    <input
+                      className="w-full bg-transparent text-gray-900 dark:text-gray-100"
+                      value={letter.reason}
+                      onChange={(e) => handleAppreciationLetterChange(index, 'reason', e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Status Message */}
+        {saveStatus && (
+          <div className={`mt-4 text-center ${
+            saveStatus.includes('نجاح') ? 'text-green-600 dark:text-green-400' : 
+            saveStatus.includes('خطأ') ? 'text-red-600 dark:text-red-400' : 
+            'text-blue-600 dark:text-blue-400'
+          }`}>
+            {saveStatus}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
