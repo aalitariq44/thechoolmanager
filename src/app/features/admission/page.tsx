@@ -602,7 +602,7 @@ export default function AdmissionPage() {
           >
             {/* رأس الوثيقة */}
             <div style={{ 
-              background: 'linear-gradient(90deg, #d32f2f 70%, #1976d2 100%)', 
+              background: 'linear-gradient(90deg,rgb(255, 0, 0) 70%, #1976d2 100%)', 
               color: '#fff', 
               padding: '40px 40px', 
               display: 'flex', 
@@ -706,7 +706,7 @@ export default function AdmissionPage() {
                 </div>
                 </div>
               <div style={{
-                background: 'linear-gradient(90deg, #d32f2f 70%, #1976d2 100%)',
+                background: 'linear-gradient(90deg,rgb(255, 0, 0) 70%, #1976d2 100%)',
                 color: '#fff',
                 padding: '8px 40px 24px 40px',
                 width: '100%',
@@ -726,7 +726,7 @@ export default function AdmissionPage() {
               </div>
                 <div
                   style={{
-                  background: 'linear-gradient(90deg, rgb(61, 211, 47) 70%, #1976d2 100%)',
+                  background: 'linear-gradient(90deg, rgb(0, 140, 255) 70%, #1976d2 100%)',
                   color: '#fff',
                   padding: '8px 40px 24px 40px',
                   width: '100%',
@@ -738,10 +738,10 @@ export default function AdmissionPage() {
                 >
                   <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                    برمجة شركة الحلول التقنية الجديدة -- 07710995922 تليجرام @tech_solu
+                    برمجة شركة الحلول التقنية الجديدة -- 07710995922 تليجرام   tech_solu@
                   </div>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                    لبرمجة مواقع الويب وتطبيقات سطح المكتب والايفون والاندرويد
+                    لبرمجة مواقع الويب وتطبيقات سطح المكتب والايفون والاندرويد وإدارة قواعد البيانات
                   </div>
                   </div>
                 </div>

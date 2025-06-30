@@ -70,8 +70,9 @@ export default function StudentRecord() {
     return () => unsubscribe();
   }, []);
 
-  const handleEdit = (studentId: string) => {
-    router.push(`/features/students/edit/${studentId}`);
+  // عند الضغط على أي طالب، الانتقال إلى صفحة عرض بيانات الطالب
+  const handleView = (studentId: string) => {
+    router.push(`/features/students/view_student/${studentId}`);
   };
 
   const toggleSort = (field: 'name' | 'registrationNumber') => {
@@ -278,7 +279,8 @@ export default function StudentRecord() {
             <div
               key={student.id}
               className="border rounded-lg p-4 hover:shadow-lg transition-shadow bg-blue-50 text-black cursor-pointer"
-              onClick={() => handleEdit(student.id)}
+              // عند الضغط على البطاقة، الانتقال لصفحة عرض بيانات الطالب
+              onClick={() => handleView(student.id)}
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-black">
@@ -385,7 +387,8 @@ export default function StudentRecord() {
                 <tr 
                   key={student.id} 
                   className="hover:bg-blue-50 cursor-pointer"
-                  onClick={() => handleEdit(student.id)}
+                  // عند الضغط على الصف، الانتقال لصفحة عرض بيانات الطالب
+                  onClick={() => handleView(student.id)}
                 >
                   <td className="py-2 px-4 border">{index + 1}</td>
                   <td className="py-2 px-4 border">{student.personalInfo.name} {student.personalInfo.fatherName}</td>
