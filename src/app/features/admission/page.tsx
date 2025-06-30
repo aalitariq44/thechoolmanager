@@ -288,6 +288,25 @@ export default function AdmissionPage() {
     );
   }
 
+  // أضف قائمة الصفوف للاستخدام في القائمة المنسدلة
+  const gradeOptions = [
+    'الأول الابتدائي',
+    'الثاني الابتدائي',
+    'الثالث الابتدائي',
+    'الرابع الابتدائي',
+    'الخامس الابتدائي',
+    'السادس الابتدائي',
+    'الأول المتوسط',
+    'الثاني المتوسط',
+    'الثالث المتوسط',
+    'الرابع العلمي',
+    'الخامس العلمي',
+    'السادس العلمي',
+    'الرابع الأدبي',
+    'الخامس الأدبي',
+    'السادس الأدبي'
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* رأس الصفحة */}
@@ -452,13 +471,17 @@ export default function AdmissionPage() {
                 <label className="block text-right mb-2 text-gray-700 dark:text-gray-200">
                   الصف
                 </label>
-                <input
-                  type="text"
+                <select
                   value={newStudent.grade}
                   onChange={(e) => setNewStudent({ ...newStudent, grade: e.target.value })}
                   className="w-full p-2 border rounded-md text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                   required
-                />
+                >
+                  <option value="">اختر الصف</option>
+                  {gradeOptions.map((grade) => (
+                    <option key={grade} value={grade}>{grade}</option>
+                  ))}
+                </select>
               </div>
 
               {/* حقل المدرسة */}
@@ -616,7 +639,7 @@ export default function AdmissionPage() {
             </div>
 
             {/* محتوى الوثيقة */}
-            <div style={{ padding: '48px 60px 0 60px', fontSize: '16px' }}>
+            <div style={{ padding: '48px 60px 0 60px', fontSize: '1.15rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ margin: '32px 0 16px 0', fontWeight: 'bold', textAlign: 'center' }}>
                   إلى / {student.school}
@@ -636,7 +659,7 @@ export default function AdmissionPage() {
                 </span>
                 {' '}بمدرستنا للعام الدراسي{' '}
                 <span style={{ fontWeight: 'bold', color: '#d32f2f' }}>
-                  2025-2024
+                  2025-2026
                 </span>
                 {' '}مع جزيل الشكر والتقدير
                 <br />
@@ -715,10 +738,10 @@ export default function AdmissionPage() {
                 >
                   <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                    برمجة شركة الحلول التقنية الجديدة
+                    برمجة شركة الحلول التقنية الجديدة -- 07710995922 تليجرام @tech_solu
                   </div>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                    07710995922
+                    لبرمجة مواقع الويب وتطبيقات سطح المكتب والايفون والاندرويد
                   </div>
                   </div>
                 </div>
