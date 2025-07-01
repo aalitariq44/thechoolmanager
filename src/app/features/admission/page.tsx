@@ -234,7 +234,7 @@ export default function AdmissionPage() {
       } else {
         // إضافة طالب جديد
         // 1. جلب آخر دفعة
-        const q = query(collection(db, 'admission_batches'), orderBy('batchNumber', 'desc'),);
+        const q = query(collection(db, 'admission_batches'), orderBy('batchNumber', 'desc'));
         const snapshot = await getDocs(q);
         let batchDocRef;
         let batchNumber = 1;
@@ -245,11 +245,13 @@ export default function AdmissionPage() {
           batchNumber = lastBatch.data().batchNumber;
           if (studentsArr.length < 100) {
             batchDocRef = doc(db, 'admission_batches', lastBatch.id);
+          } else {
+            batchNumber = batchNumber + 1; // فقط إذا أنشأنا دفعة جديدة
           }
         }
         if (!batchDocRef) {
           // إنشاء دفعة جديدة
-          batchNumber = batchNumber + 1;
+          // إذا لم توجد دفعات batchNumber يبقى 1، إذا وجدت دفعات batchNumber زيدناه فوق
           batchDocRef = doc(collection(db, 'admission_batches'));
           await setDoc(batchDocRef, {
             batchNumber,
