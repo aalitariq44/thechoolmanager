@@ -1,16 +1,21 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { 
-  collection, 
-  query, 
-  onSnapshot, 
-  deleteDoc, 
-  doc, 
-  addDoc, 
-  updateDoc, 
+import {
+  collection,
+  query,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  addDoc,
+  updateDoc,
   orderBy,
-  getDocs // إضافة لجلب بيانات الإعدادات
+  getDocs,
+  setDoc,
+  arrayUnion,
+  arrayRemove,
+  increment,
+  getDoc
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import jsPDF from 'jspdf';
@@ -35,12 +40,21 @@ interface SchoolSettings {
   managerName: string; // إضافة اسم المدير
 }
 
+// واجهة دفعة القبولات
+interface AdmissionBatch {
+  id: string;
+  batchNumber: number;
+  students: Student[];
+  createdAt: string;
+}
+
 // المكون الرئيسي لصفحة القبولات
 export default function AdmissionPage() {
   // حالات المكون
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
+  const [batches, setBatches] = useState<AdmissionBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [studentPreview, setStudentPreview] = useState<Student | null>(null);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
@@ -134,11 +148,50 @@ export default function AdmissionPage() {
     fetchSchoolSettings();
   }, []);
 
+  // جلب القبولات من جميع الدُفعات
+  useEffect(() => {
+    const q = query(collection(db, 'admission_batches'), orderBy('batchNumber', 'desc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const allStudents: Student[] = [];
+        const batchList: AdmissionBatch[] = [];
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const batch: AdmissionBatch = {
+            id: docSnap.id,
+            batchNumber: data.batchNumber,
+            students: data.students || [],
+            createdAt: data.createdAt,
+          };
+          batchList.push(batch);
+          allStudents.push(...(data.students || []));
+        });
+        // ترتيب القبولات تنازلياً حسب createdAt
+        allStudents.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        setStudents(allStudents);
+        setBatches(batchList);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching admissions: ", error);
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
   // دالة حذف الطالب
   const handleDelete = async (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا القبول؟')) {
       try {
-        await deleteDoc(doc(db, 'admissions', id));
+        // ابحث عن الدُفعة التي تحتوي الطالب
+        const batchDoc = await findBatchByStudentId(id);
+        if (batchDoc) {
+          await updateDoc(doc(db, 'admission_batches', batchDoc.id), {
+            students: batchDoc.students.filter((s: Student) => s.id !== id)
+          });
+        }
       } catch (error) {
         console.error('Error deleting document: ', error);
         alert('حدث خطأ أثناء حذف القبول');
@@ -159,32 +212,68 @@ export default function AdmissionPage() {
     setIsModalOpen(true);
   };
 
-  // دالة إرسال النموذج
+  // دالة إضافة أو تعديل طالب
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (editingStudent) {
-        // تحديث طالب موجود
-        await updateDoc(doc(db, 'admissions', editingStudent.id), {
-          ...newStudent,
-          updatedAt: new Date().toISOString()
-        });
+        // تعديل: ابحث عن الدُفعة التي تحتوي الطالب وحدثه هناك
+        const batchDoc = await findBatchByStudentId(editingStudent.id);
+        if (batchDoc) {
+          // حذف الطالب القديم
+          await updateDoc(doc(db, 'admission_batches', batchDoc.id), {
+            students: batchDoc.students.filter((s: Student) => s.id !== editingStudent.id)
+          });
+          // إضافة الطالب المعدل (بنفس id)
+          await updateDoc(doc(db, 'admission_batches', batchDoc.id), {
+            students: arrayUnion({ ...newStudent, id: editingStudent.id, updatedAt: new Date().toISOString() })
+          });
+        }
       } else {
         // إضافة طالب جديد
-        await addDoc(collection(db, 'admissions'), {
-          ...newStudent,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+        // 1. جلب آخر دفعة
+        const q = query(collection(db, 'admission_batches'), orderBy('batchNumber', 'desc'),);
+        const snapshot = await getDocs(q);
+        let batchDocRef;
+        let batchNumber = 1;
+        let studentsArr: Student[] = [];
+        if (!snapshot.empty) {
+          const lastBatch = snapshot.docs[0];
+          studentsArr = lastBatch.data().students || [];
+          batchNumber = lastBatch.data().batchNumber;
+          if (studentsArr.length < 100) {
+            batchDocRef = doc(db, 'admission_batches', lastBatch.id);
+          }
+        }
+        if (!batchDocRef) {
+          // إنشاء دفعة جديدة
+          batchNumber = batchNumber + 1;
+          batchDocRef = doc(collection(db, 'admission_batches'));
+          await setDoc(batchDocRef, {
+            batchNumber,
+            students: [],
+            createdAt: new Date().toISOString(),
+          });
+        }
+        // إضافة الطالب الجديد
+        const studentId = crypto.randomUUID();
+        await updateDoc(batchDocRef, {
+          students: arrayUnion({
+            ...newStudent,
+            id: studentId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
         });
       }
-      
+
       // إعادة تعيين النموذج
-      setNewStudent({ 
-        name: '', 
-        grade: '', 
-        school: '', 
-        admissionDate: new Date().toISOString().split('T')[0], 
-        count: '' 
+      setNewStudent({
+        name: '',
+        grade: '',
+        school: '',
+        admissionDate: new Date().toISOString().split('T')[0],
+        count: ''
       });
       setEditingStudent(null);
       setIsModalOpen(false);
@@ -222,7 +311,7 @@ export default function AdmissionPage() {
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      
+
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`قبول_${student.name.replace(/ /g, '_') || 'Document'}.pdf`);
     } catch (error) {
@@ -268,12 +357,12 @@ export default function AdmissionPage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingStudent(null);
-    setNewStudent({ 
-      name: '', 
-      grade: '', 
-      school: '', 
-      admissionDate: new Date().toISOString().split('T')[0], 
-      count: '' 
+    setNewStudent({
+      name: '',
+      grade: '',
+      school: '',
+      admissionDate: new Date().toISOString().split('T')[0],
+      count: ''
     });
   };
 
@@ -544,20 +633,20 @@ export default function AdmissionPage() {
             >
               ×
             </button>
-            
+
             <div className="mb-4 text-lg font-bold text-gray-900 dark:text-gray-100">
               معاينة PDF - {studentPreview.name}
             </div>
-            
+
             <div className="overflow-auto border rounded shadow max-h-[70vh] bg-gray-100 dark:bg-gray-800">
-              <img 
-                src={previewImg} 
-                alt="معاينة PDF" 
+              <img
+                src={previewImg}
+                alt="معاينة PDF"
                 className="max-w-full h-auto"
-                style={{ width: '794px', height: '1123px' }} 
+                style={{ width: '794px', height: '1123px' }}
               />
             </div>
-            
+
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => {
@@ -601,14 +690,14 @@ export default function AdmissionPage() {
             }}
           >
             {/* رأس الوثيقة */}
-            <div style={{ 
-              background: 'linear-gradient(90deg,rgb(255, 0, 0) 70%, #1976d2 100%)', 
-              color: '#fff', 
-              padding: '40px 40px', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              minHeight: 'unset', 
+            <div style={{
+              background: 'linear-gradient(90deg,rgb(255, 0, 0) 70%, #1976d2 100%)',
+              color: '#fff',
+              padding: '40px 40px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              minHeight: 'unset',
               height: 'auto'
             }}>
               <div style={{ textAlign: 'right', lineHeight: 1.5 }}>
@@ -640,14 +729,14 @@ export default function AdmissionPage() {
 
             {/* محتوى الوثيقة */}
             <div style={{ padding: '48px 60px 0 60px', fontSize: '1.15rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ margin: '32px 0 16px 0', fontWeight: 'bold', textAlign: 'center' }}>
                   إلى / {student.school}
                 </div>
                 <div style={{ marginBottom: '32px', fontWeight: 'bold', textAlign: 'center' }}>
                   م / قبول طالب
                 </div>
-                </div>
+              </div>
               <div style={{ marginBottom: '40px', fontSize: '1.15rem', lineHeight: 2 }}>
                 لا مانع لدينا من قبول{' '}
                 <span style={{ fontWeight: 'bold', color: '#1976d2' }}>
@@ -663,17 +752,17 @@ export default function AdmissionPage() {
                 </span>
                 {' '}مع جزيل الشكر والتقدير
                 <br />
-                <span style={{ 
-                  display: 'block', 
-                  marginTop: '16px', 
-                  fontWeight: 'bold' 
+                <span style={{
+                  display: 'block',
+                  marginTop: '16px',
+                  fontWeight: 'bold'
                 }}>
                   المستمسكات المطلوبة:
                 </span>
-                <ol style={{ 
-                  paddingRight: '20px', 
-                  marginTop: '8px', 
-                  fontWeight: 400 
+                <ol style={{
+                  paddingRight: '20px',
+                  marginTop: '8px',
+                  fontWeight: 400
                 }}>
                   <li>جلب وثيقة حديثة من اخر صف.</li>
                   <li>جلب صور حديثة عدد ٦.</li>
@@ -686,7 +775,7 @@ export default function AdmissionPage() {
 
             {/* تذييل الوثيقة */}
             <div style={{ marginTop: 'auto' }}>
-                 <div style={{
+              <div style={{
                 // background: 'linear-gradient(90deg,rgb(251, 255, 3) 70%, #1976d2 100%)',
                 color: '#000',
                 padding: '8px 40px 24px 40px',
@@ -695,16 +784,16 @@ export default function AdmissionPage() {
                 justifyContent: 'left',
                 alignItems: 'center',
                 boxSizing: 'border-box',
-                }}>
+              }}>
                 <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#000' }}>
-                  {'مدير المدرسة'}
+                    {'مدير المدرسة'}
                   </div>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#000' }}>
-                  {schoolSettings.managerName || 'اسم مدير المدرسة'}
+                    {schoolSettings.managerName || 'اسم مدير المدرسة'}
                   </div>
                 </div>
-                </div>
+              </div>
               <div style={{
                 background: 'linear-gradient(90deg,rgb(255, 0, 0) 70%, #1976d2 100%)',
                 color: '#fff',
@@ -724,8 +813,8 @@ export default function AdmissionPage() {
                   </div>
                 </div>
               </div>
-                <div
-                  style={{
+              <div
+                style={{
                   background: 'linear-gradient(90deg, rgb(0, 140, 255) 70%, #1976d2 100%)',
                   color: '#fff',
                   padding: '8px 40px 24px 40px',
@@ -734,17 +823,17 @@ export default function AdmissionPage() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   boxSizing: 'border-box',
-                  }}
-                >
-                  <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
+                }}
+              >
+                <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
                     برمجة شركة الحلول التقنية الجديدة -- 07710995922 تليجرام   tech_solu@
                   </div>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
                     لبرمجة مواقع الويب وتطبيقات سطح المكتب والايفون والاندرويد وإدارة قواعد البيانات
                   </div>
-                  </div>
                 </div>
+              </div>
             </div>
           </div>
         ))}
