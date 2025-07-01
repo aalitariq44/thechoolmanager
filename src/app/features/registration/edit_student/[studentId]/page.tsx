@@ -2,7 +2,7 @@
 
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { db } from '../../../../../firebase/config';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -96,7 +96,7 @@ export default function EditStudentRecord() {
   const [originalGradeColumns, setOriginalGradeColumns] = useState<GradeColumn[]>([]);
   const [originalSelectedSubjects, setOriginalSelectedSubjects] = useState<string[]>(initialSubjects.slice(0, -1));
   const [pdfLoading, setPdfLoading] = useState(false);
-  const pdfRef = useState<HTMLDivElement | null>(null);
+  const pdfRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -294,7 +294,7 @@ export default function EditStudentRecord() {
             fontFamily: 'Arial, sans-serif',
             zIndex: -1
           }}
-          ref={pdfRef as any}
+          ref={pdfRef}
         >
           <h2 style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '24px', marginBottom: '24px' }}>
             بيانات القيد للطالب
