@@ -29,6 +29,8 @@ interface Student {
   school: string;
   admissionDate: string;
   count?: string;
+  createdAt?: string; // إضافة createdAt
+  updatedAt?: string; // إضافة updatedAt
 }
 
 // تعريف واجهة معلومات المدرسة
@@ -167,8 +169,8 @@ export default function AdmissionPage() {
           batchList.push(batch);
           allStudents.push(...(data.students || []));
         });
-        // ترتيب القبولات تنازلياً حسب createdAt
-        allStudents.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        // ترتيب القبولات تنازلياً حسب createdAt (معالجة undefined)
+        allStudents.sort((a, b) => ((b.createdAt || '')).localeCompare(a.createdAt || ''));
         setStudents(allStudents);
         setBatches(batchList);
         setLoading(false);
@@ -364,6 +366,19 @@ export default function AdmissionPage() {
       admissionDate: new Date().toISOString().split('T')[0],
       count: ''
     });
+  };
+
+  // دالة للعثور على الدُفعة التي تحتوي الطالب
+  const findBatchByStudentId = async (studentId: string) => {
+    const q = query(collection(db, 'admission_batches'));
+    const snapshot = await getDocs(q);
+    for (const docSnap of snapshot.docs) {
+      const studentsArr = docSnap.data().students || [];
+      if (studentsArr.some((s: Student) => s.id === studentId)) {
+        return { id: docSnap.id, students: studentsArr };
+      }
+    }
+    return null;
   };
 
   // عرض حالة التحميل
