@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { auth, db } from '../firebase/config';
 import LoginPage from './login/page';
+import SchoolScheduleApp from './features/schedule/page';
 
 export default function SchoolDashboard() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function SchoolDashboard() {
   const [teacherCount, setTeacherCount] = useState(0);
   const [studentCountLoading, setStudentCountLoading] = useState(true);
   const [teacherCountLoading, setTeacherCountLoading] = useState(true);
+  const [currentSchedule, setCurrentSchedule] = useState<any>(null);
+  const [loadingCurrentSchedule, setLoadingCurrentSchedule] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -57,6 +60,43 @@ export default function SchoolDashboard() {
 
     fetchCounts();
   }, [user]);
+
+  // دالة لجلب الجدول الحالي وفتحه
+  const openCurrentSchedule = async () => {
+    setLoadingCurrentSchedule(true);
+    try {
+      const q = query(collection(db, 'schedules'), where('isCurrent', '==', true));
+      const snapshot = await getCountFromServer(q);
+      // إذا لم يوجد جدول حالي
+      if (snapshot.data().count === 0) {
+        alert('لا يوجد جدول حالي معين');
+        setLoadingCurrentSchedule(false);
+        return;
+      }
+      // جلب بيانات الجدول الحالي
+      const schedulesSnap = await (await import('firebase/firestore')).getDocs(q);
+      if (!schedulesSnap.empty) {
+        const docSnap = schedulesSnap.docs[0];
+        setCurrentSchedule({
+          id: docSnap.id,
+          ...docSnap.data()
+        });
+      } else {
+        alert('لا يوجد جدول حالي معين');
+      }
+    } catch (error) {
+      alert('حدث خطأ أثناء جلب الجدول الحالي');
+    } finally {
+      setLoadingCurrentSchedule(false);
+    }
+  };
+
+  // إذا تم اختيار جدول حالي، نعرض صفحة الجدول مباشرة
+  if (currentSchedule) {
+    return (
+      <SchoolScheduleApp initialSchedule={currentSchedule} onBack={() => setCurrentSchedule(null)} />
+    );
+  }
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -131,7 +171,8 @@ export default function SchoolDashboard() {
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <button
-            onClick={() => alert('سيتم إضافة هذه الميزة قريباً')}
+            onClick={openCurrentSchedule}
+            disabled={loadingCurrentSchedule}
             className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-md rounded-lg p-6 flex items-center justify-between transition-all duration-300 hover:shadow-lg"
           >
             <div className="flex items-center">
@@ -142,9 +183,16 @@ export default function SchoolDashboard() {
               </div>
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">الجدول الحالي</h3>
             </div>
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            {loadingCurrentSchedule ? (
+              <svg className="animate-spin w-5 h-5 text-purple-400" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            )}
           </button>
 
           <button

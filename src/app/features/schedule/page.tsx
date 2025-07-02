@@ -1,6 +1,6 @@
 "use client";
 
-import { addDoc, collection, onSnapshot, query, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { addDoc, collection, onSnapshot, query, orderBy, updateDoc, doc, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { JSX, useEffect, useState } from 'react';
 import { db } from '../../../firebase/config';
 
@@ -12,6 +12,7 @@ interface Schedule {
   classes: string[];
   schedules: { [className: string]: { [key: string]: string[] } };
   createdAt: Date;
+  isCurrent?: boolean; // جدول حالي
 }
 
 interface NewScheduleForm {
@@ -19,6 +20,7 @@ interface NewScheduleForm {
   dailyLessons: number;
   workingDays: string[];
   classes: string[];
+  classSections: { [className: string]: number }; // جديد: عدد الشعب لكل صف
 }
 
 // قائمة المواد الدراسية
@@ -68,9 +70,20 @@ const AVAILABLE_CLASSES = [
   'السادس الأدبي'
 ];
 
-export default function SchoolScheduleApp(): JSX.Element {
+// قائمة الحروف الأبجدية للشعب
+const SECTION_LETTERS = [
+  'أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'
+];
+
+export default function SchoolScheduleApp({
+  initialSchedule,
+  onBack
+}: {
+  initialSchedule?: Schedule | null,
+  onBack?: () => void
+} = {}): JSX.Element {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
+  const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(initialSchedule || null);
   const [currentClass, setCurrentClass] = useState<string>('');
   const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -79,12 +92,18 @@ export default function SchoolScheduleApp(): JSX.Element {
   const [newSchedule, setNewSchedule] = useState<NewScheduleForm>({
     name: '',
     dailyLessons: 6,
-    workingDays: [],
-    classes: []
+    workingDays: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'],
+    classes: [],
+    classSections: {} // جديد
   });
 
   // تحميل جميع الجداول عند بدء التطبيق
   useEffect(() => {
+    if (initialSchedule) {
+      setCurrentSchedule(initialSchedule);
+      setCurrentClass(initialSchedule.classes?.[0] || '');
+      return;
+    }
     const q = query(collection(db, 'schedules'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const schedulesData: Schedule[] = snapshot.docs.map(doc => ({
@@ -94,13 +113,14 @@ export default function SchoolScheduleApp(): JSX.Element {
         workingDays: doc.data().workingDays,
         classes: doc.data().classes || [],
         schedules: doc.data().schedules || {},
-        createdAt: doc.data().createdAt
+        createdAt: doc.data().createdAt,
+        isCurrent: doc.data().isCurrent || false
       }));
       setSchedules(schedulesData);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [initialSchedule]);
 
   // إنشاء جدول جديد
   const createSchedule = async (): Promise<void> => {
@@ -111,10 +131,24 @@ export default function SchoolScheduleApp(): JSX.Element {
 
     setIsLoading(true);
     try {
-      // إنشاء جداول فارغة لكل صف
-      const emptySchedules: { [className: string]: { [key: string]: string[] } } = {};
-
+      // توليد قائمة الصفوف مع الشعب
+      const classesWithSections: string[] = [];
       newSchedule.classes.forEach(className => {
+        const sectionCount = newSchedule.classSections[className] || 1;
+        if (sectionCount <= 1) {
+          classesWithSections.push(className);
+        } else {
+          for (let i = 0; i < sectionCount; i++) {
+            // استخدم الحروف الأبجدية العربية
+            const sectionLetter = SECTION_LETTERS[i] || String(i + 1);
+            classesWithSections.push(`${className} شعبة ${sectionLetter}`);
+          }
+        }
+      });
+
+      // إنشاء جداول فارغة لكل صف/شعبة
+      const emptySchedules: { [className: string]: { [key: string]: string[] } } = {};
+      classesWithSections.forEach(className => {
         const classSchedule: { [key: string]: string[] } = {};
         newSchedule.workingDays.forEach(day => {
           classSchedule[day] = Array(newSchedule.dailyLessons).fill('');
@@ -126,12 +160,12 @@ export default function SchoolScheduleApp(): JSX.Element {
         name: newSchedule.name,
         dailyLessons: newSchedule.dailyLessons,
         workingDays: newSchedule.workingDays,
-        classes: newSchedule.classes,
+        classes: classesWithSections,
         schedules: emptySchedules,
         createdAt: new Date()
       });
 
-      setNewSchedule({ name: '', dailyLessons: 6, workingDays: [], classes: [] });
+      setNewSchedule({ name: '', dailyLessons: 6, workingDays: [], classes: [], classSections: {} });
       setShowCreateForm(false);
     } catch (error) {
       console.error('خطأ في إنشاء الجدول:', error);
@@ -175,6 +209,40 @@ export default function SchoolScheduleApp(): JSX.Element {
     }
   };
 
+  // تعيين جدول كجدول حالي
+  const setCurrentScheduleFlag = async (scheduleId: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      // جلب كل الجداول
+      const q = query(collection(db, 'schedules'));
+      const snapshot = await getDocs(q);
+      const batch = writeBatch(db);
+
+      snapshot.docs.forEach(docSnap => {
+        batch.update(doc(db, 'schedules', docSnap.id), {
+          isCurrent: docSnap.id === scheduleId
+        });
+      });
+
+      await batch.commit();
+
+      // تحديث الحالة محلياً ليظهر التغيير فوراً
+      setSchedules(prev =>
+        prev.map(sch => ({
+          ...sch,
+          isCurrent: sch.id === scheduleId
+        }))
+      );
+
+      alert('تم تعيين الجدول الحالي بنجاح');
+    } catch (error) {
+      console.error('خطأ في تعيين الجدول الحالي:', error);
+      alert('حدث خطأ في تعيين الجدول الحالي');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // تعديل يوم العمل
   const toggleWorkingDay = (day: string): void => {
     setNewSchedule(prev => ({
@@ -192,6 +260,17 @@ export default function SchoolScheduleApp(): JSX.Element {
       classes: prev.classes.includes(className)
         ? prev.classes.filter(c => c !== className)
         : [...prev.classes, className]
+    }));
+  };
+
+  // تعديل عدد الشعب لصف معين
+  const setClassSections = (className: string, count: number) => {
+    setNewSchedule(prev => ({
+      ...prev,
+      classSections: {
+        ...prev.classSections,
+        [className]: count
+      }
     }));
   };
 
@@ -259,8 +338,12 @@ export default function SchoolScheduleApp(): JSX.Element {
 
   // العودة للقائمة الرئيسية
   const goBackToHome = (): void => {
-    setCurrentSchedule(null);
-    setCurrentClass('');
+    if (onBack) {
+      onBack();
+    } else {
+      setCurrentSchedule(null);
+      setCurrentClass('');
+    }
   };
 
   // عرض الصفحة الرئيسية
@@ -339,7 +422,7 @@ export default function SchoolScheduleApp(): JSX.Element {
                     </label>
                     <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-600 rounded-lg p-3">
                       {AVAILABLE_CLASSES.map(className => (
-                        <label key={className} className="flex items-center space-x-2 space-x-reverse">
+                        <div key={className} className="flex items-center space-x-2 space-x-reverse">
                           <input
                             type="checkbox"
                             checked={newSchedule.classes.includes(className)}
@@ -348,7 +431,20 @@ export default function SchoolScheduleApp(): JSX.Element {
                                      focus:ring-blue-500 dark:focus:ring-blue-400"
                           />
                           <span className="text-sm text-slate-700 dark:text-slate-300">{className}</span>
-                        </label>
+                          {/* جديد: إدخال عدد الشعب */}
+                          {newSchedule.classes.includes(className) && (
+                            <input
+                              type="number"
+                              min={1}
+                              max={10}
+                              value={newSchedule.classSections[className] || 1}
+                              onChange={e => setClassSections(className, Math.max(1, parseInt(e.target.value) || 1))}
+                              className="w-16 ml-2 border border-slate-300 dark:border-slate-600 rounded px-1 py-0.5 text-xs"
+                              title="عدد الشعب"
+                              placeholder="عدد الشعب"
+                            />
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -376,9 +472,14 @@ export default function SchoolScheduleApp(): JSX.Element {
           {/* قائمة الجداول */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {schedules.map(schedule => (
-              <div key={schedule.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4 
-                                              hover:shadow-md transition-shadow border border-slate-200 dark:border-slate-700">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{schedule.name}</h3>
+              <div key={schedule.id} className={`bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4 
+                                              hover:shadow-md transition-shadow border ${schedule.isCurrent ? 'border-blue-500' : 'border-slate-200 dark:border-slate-700'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{schedule.name}</h3>
+                  {schedule.isCurrent && (
+                    <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded ml-2">الجدول الحالي</span>
+                  )}
+                </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
                   عدد الحصص: {schedule.dailyLessons}
                 </p>
@@ -402,6 +503,15 @@ export default function SchoolScheduleApp(): JSX.Element {
                     حذف
                   </button>
                 </div>
+                <button
+                  onClick={() => setCurrentScheduleFlag(schedule.id)}
+                  disabled={schedule.isCurrent || isLoading}
+                  className={`mt-3 w-full py-2 rounded font-medium transition-colors ${schedule.isCurrent
+                    ? 'bg-blue-400 text-white cursor-not-allowed'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+                >
+                  {schedule.isCurrent ? 'الجدول الحالي' : 'تعيين كجدول حالي'}
+                </button>
               </div>
             ))}
           </div>
@@ -464,7 +574,8 @@ export default function SchoolScheduleApp(): JSX.Element {
             {/* قائمة المواد الجانبية */}
             <div className="w-64 bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4 border border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">المواد الدراسية</h3>
-              <div className="space-y-2">
+              {/* عدل هنا: من space-y-2 إلى grid grid-cols-2 */}
+              <div className="grid grid-cols-2 gap-2">
                 {SUBJECTS.map(subject => (
                   <div
                     key={subject}
