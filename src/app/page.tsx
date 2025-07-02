@@ -115,7 +115,11 @@ export default function SchoolDashboard() {
         {/* Stats and Buttons Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {/* Current Students Count */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg cursor-pointer"
+            onClick={() => router.push('/features/students')}
+            title="عرض الطلاب الحاليين"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">عدد الطلاب الحاليين</p>
@@ -142,7 +146,11 @@ export default function SchoolDashboard() {
           </div>
 
           {/* Teachers Count */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg cursor-pointer"
+            onClick={() => router.push('/features/teachers')}
+            title="عرض المعلمين"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">عدد المعلمين</p>

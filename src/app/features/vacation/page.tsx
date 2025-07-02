@@ -23,8 +23,10 @@ interface StudentData {
 
 interface VacationRecord {
   id: string;
-  date: string;
-  reason?: string; // أضف السبب إذا لم يكن موجوداً
+  date?: string; // ليوم واحد
+  from?: string; // بداية النطاق
+  to?: string;   // نهاية النطاق
+  reason?: string;
 }
 
 export default function StudentVacation() {
@@ -34,7 +36,8 @@ export default function StudentVacation() {
   const [sortField, setSortField] = useState<'name' | 'vacations'>('vacations');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
-  const [vacationDates, setVacationDates] = useState<{ [studentId: string]: string }>({});
+  // تعديل vacationDates ليحمل من وإلى
+  const [vacationDates, setVacationDates] = useState<{ [studentId: string]: { from: string; to: string } }>({});
   const [saving, setSaving] = useState<{ [studentId: string]: boolean }>({});
   const [error, setError] = useState<{ [studentId: string]: string | null }>({});
   const [vacationsCount, setVacationsCount] = useState<{ [studentId: string]: number }>({});
@@ -48,6 +51,8 @@ export default function StudentVacation() {
   const [loadingVacationsForDay, setLoadingVacationsForDay] = useState(false);
   const router = useRouter();
   const [vacationReasons, setVacationReasons] = useState<{ [studentId: string]: string }>({});
+  // إضافة نوع الإجازة لكل طالب (single/multiple)
+  const [vacationType, setVacationType] = useState<{ [studentId: string]: 'single' | 'multiple' }>({});
 
   useEffect(() => {
     const q = query(collection(db, 'students'), orderBy('personalInfo.registrationNumber'));
@@ -123,30 +128,65 @@ export default function StudentVacation() {
   });
 
   const handleAddVacation = async (studentId: string) => {
-    const date = vacationDates[studentId];
+    const type = vacationType[studentId] || 'single';
+    const dates = vacationDates[studentId] || { from: '', to: '' };
     const reason = vacationReasons[studentId];
-    if (!date || !reason) {
-      setError((prev) => ({
-        ...prev,
-        [studentId]: !date
-          ? 'يرجى اختيار التاريخ'
-          : !reason
-          ? 'يرجى إدخال سبب الإجازة'
-          : null,
-      }));
-      return;
+    if (type === 'single') {
+      if (!dates.from || !reason) {
+        setError((prev) => ({
+          ...prev,
+          [studentId]: !dates.from
+            ? 'يرجى اختيار تاريخ الإجازة'
+            : !reason
+            ? 'يرجى إدخال سبب الإجازة'
+            : null,
+        }));
+        return;
+      }
+    } else {
+      if (!dates.from || !dates.to || !reason) {
+        setError((prev) => ({
+          ...prev,
+          [studentId]: !dates.from
+            ? 'يرجى اختيار تاريخ البداية'
+            : !dates.to
+            ? 'يرجى اختيار تاريخ النهاية'
+            : !reason
+            ? 'يرجى إدخال سبب الإجازة'
+            : null,
+        }));
+        return;
+      }
+      if (dates.to < dates.from) {
+        setError((prev) => ({
+          ...prev,
+          [studentId]: 'تاريخ النهاية يجب أن يكون بعد أو يساوي تاريخ البداية',
+        }));
+        return;
+      }
     }
     setSaving((prev) => ({ ...prev, [studentId]: true }));
     setError((prev) => ({ ...prev, [studentId]: null }));
     try {
-      await addDoc(collection(db, 'vacations'), {
-        studentId,
-        date,
-        reason,
-        createdAt: new Date().toISOString(),
-      });
-      setVacationDates((prev) => ({ ...prev, [studentId]: '' }));
+      if (type === 'single') {
+        await addDoc(collection(db, 'vacations'), {
+          studentId,
+          date: dates.from,
+          reason,
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        await addDoc(collection(db, 'vacations'), {
+          studentId,
+          from: dates.from,
+          to: dates.to,
+          reason,
+          createdAt: new Date().toISOString(),
+        });
+      }
+      setVacationDates((prev) => ({ ...prev, [studentId]: { from: '', to: '' } }));
       setVacationReasons((prev) => ({ ...prev, [studentId]: '' }));
+      setVacationType((prev) => ({ ...prev, [studentId]: 'single' }));
     } catch (e) {
       setError((prev) => ({ ...prev, [studentId]: 'حدث خطأ أثناء الحفظ' }));
     } finally {
@@ -163,12 +203,22 @@ export default function StudentVacation() {
       const vacationsQuery = query(collection(db, 'vacations'), where('studentId', '==', student.id));
       const snapshot = await getDocs(vacationsQuery);
       const vacations: VacationRecord[] = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        vacations.push({ id: doc.id, date: data.date, reason: data.reason });
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        vacations.push({
+          id: docSnap.id,
+          date: data.date,
+          from: data.from,
+          to: data.to,
+          reason: data.reason,
+        });
       });
-      // ترتيب حسب التاريخ تنازلي
-      vacations.sort((a, b) => b.date.localeCompare(a.date));
+      // ترتيب حسب الأحدث (حسب البداية أو التاريخ)
+      vacations.sort((a, b) => {
+        const aDate = a.from || a.date || '';
+        const bDate = b.from || b.date || '';
+        return bDate.localeCompare(aDate);
+      });
       setStudentVacations(vacations);
     } catch (e) {
       setStudentVacations([]);
@@ -179,6 +229,12 @@ export default function StudentVacation() {
 
   // دالة لطباعة إجازة واحدة
   const handlePrintSingleVacation = (student: StudentData, vacation: VacationRecord) => {
+    let dateStr = '';
+    if (vacation.from && vacation.to) {
+      dateStr = `من ${vacation.from} إلى ${vacation.to}`;
+    } else if (vacation.date) {
+      dateStr = vacation.date;
+    }
     const printContent = `
       <html dir="rtl">
       <head>
@@ -197,7 +253,7 @@ export default function StudentVacation() {
           <div class="row"><span class="label">اسم الطالب:</span> ${student.personalInfo.name} ${student.personalInfo.fatherName || ''}</div>
           <div class="row"><span class="label">الصف والشعبة:</span> ${student.personalInfo.currentClass}${student.personalInfo.currentSection ? `(${student.personalInfo.currentSection})` : ''}</div>
           <div class="row"><span class="label">رقم التسجيل:</span> ${student.personalInfo.registrationNumber}</div>
-          <div class="row"><span class="label">تاريخ الإجازة:</span> ${vacation.date}</div>
+          <div class="row"><span class="label">تاريخ الإجازة:</span> ${dateStr}</div>
           <div class="row"><span class="label">سبب الإجازة:</span> ${vacation.reason || ''}</div>
         </div>
       </body>
@@ -337,8 +393,13 @@ export default function StudentVacation() {
                 {studentVacations.map(vac => (
                   <li key={vac.id} className="border-b pb-2 flex justify-between items-center gap-2">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full justify-between">
-                      <span>تاريخ الإجازة:</span>
-                      <span className="font-bold text-green-600">{vac.date}</span>
+                      <span>
+                        تاريخ الإجازة:
+                        {vac.from && vac.to
+                          ? <span className="font-bold text-green-600"> من {vac.from} إلى {vac.to}</span>
+                          : <span className="font-bold text-green-600">{vac.date}</span>
+                        }
+                      </span>
                       {/* زر طباعة الإجازة */}
                       <button
                         className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
@@ -510,39 +571,81 @@ export default function StudentVacation() {
               </div>
 
               <div className="mt-4 flex flex-col gap-2">
+                {/* خيارات نوع الإجازة */}
+                <div className="flex gap-4 mb-2" onClick={e => e.stopPropagation()}>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name={`vacType-${student.id}`}
+                      checked={(vacationType[student.id] || 'single') === 'single'}
+                      onChange={() => setVacationType(prev => ({ ...prev, [student.id]: 'single' }))}
+                    />
+                    يوم واحد
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name={`vacType-${student.id}`}
+                      checked={vacationType[student.id] === 'multiple'}
+                      onChange={() => setVacationType(prev => ({ ...prev, [student.id]: 'multiple' }))}
+                    />
+                    أكثر من يوم
+                  </label>
+                </div>
                 <button
                   className="bg-green-600 text-white px-3 py-1 rounded disabled:opacity-50"
                   onClick={e => {
                     e.stopPropagation();
-                    if (!vacationDates[student.id] || !vacationReasons[student.id]) {
-                      setError(prev => ({
-                        ...prev,
-                        [student.id]: !vacationDates[student.id]
-                          ? 'يرجى إدخال التاريخ'
-                          : !vacationReasons[student.id]
-                          ? 'يرجى إدخال سبب الإجازة'
-                          : null,
-                      }));
-                    } else {
-                      setError(prev => ({ ...prev, [student.id]: null }));
-                      handleAddVacation(student.id);
-                    }
+                    handleAddVacation(student.id);
                   }}
                   disabled={saving[student.id]}
                 >
                   {saving[student.id] ? 'جاري الحفظ...' : 'إضافة إجازة'}
                 </button>
                 {/* إذا ضغط المستخدم على إضافة إجازة ولم يدخل تاريخ أو سبب، أظهر الحقول ورسالة الخطأ */}
-                {error[student.id] && (
+                {(error[student.id] || true) && (
                   <div className="flex flex-col gap-1">
-                    <input
-                      type="date"
-                      className="border rounded p-1 text-black"
-                      value={vacationDates[student.id] || ''}
-                      onChange={e => setVacationDates(prev => ({ ...prev, [student.id]: e.target.value }))}
-                      onClick={e => e.stopPropagation()}
-                      autoFocus
-                    />
+                    {/* حقول التاريخ حسب نوع الإجازة */}
+                    {(vacationType[student.id] || 'single') === 'single' ? (
+                      <input
+                        type="date"
+                        className="border rounded p-1 text-black"
+                        value={vacationDates[student.id]?.from || ''}
+                        onChange={e => setVacationDates(prev => ({
+                          ...prev,
+                          [student.id]: { from: e.target.value, to: '' }
+                        }))}
+                        onClick={e => e.stopPropagation()}
+                        autoFocus
+                        placeholder="تاريخ الإجازة"
+                      />
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          className="border rounded p-1 text-black"
+                          value={vacationDates[student.id]?.from || ''}
+                          onChange={e => setVacationDates(prev => ({
+                            ...prev,
+                            [student.id]: { ...prev[student.id], from: e.target.value, to: prev[student.id]?.to || '' }
+                          }))}
+                          onClick={e => e.stopPropagation()}
+                          autoFocus
+                          placeholder="من"
+                        />
+                        <input
+                          type="date"
+                          className="border rounded p-1 text-black"
+                          value={vacationDates[student.id]?.to || ''}
+                          onChange={e => setVacationDates(prev => ({
+                            ...prev,
+                            [student.id]: { ...prev[student.id], from: prev[student.id]?.from || '', to: e.target.value }
+                          }))}
+                          onClick={e => e.stopPropagation()}
+                          placeholder="إلى"
+                        />
+                      </div>
+                    )}
                     <input
                       type="text"
                       className="border rounded p-1 text-black"
@@ -551,7 +654,7 @@ export default function StudentVacation() {
                       onChange={e => setVacationReasons(prev => ({ ...prev, [student.id]: e.target.value }))}
                       onClick={e => e.stopPropagation()}
                     />
-                    <span className="text-red-600 text-xs">{error[student.id]}</span>
+                    {error[student.id] && <span className="text-red-600 text-xs">{error[student.id]}</span>}
                   </div>
                 )}
               </div>
@@ -587,37 +690,73 @@ export default function StudentVacation() {
                   <td className="py-2 px-4 border font-bold text-green-600">{vacationsCount[student.id] || 0}</td>
                   <td className="py-2 px-4 border">
                     <div className="flex flex-col gap-1" onClick={e => e.stopPropagation()}>
-                      {/* زر إضافة إجازة فقط */}
+                      {/* خيارات نوع الإجازة */}
+                      <div className="flex gap-4 mb-2">
+                        <label className="flex items-center gap-1">
+                          <input
+                            type="radio"
+                            name={`vacType-table-${student.id}`}
+                            checked={(vacationType[student.id] || 'single') === 'single'}
+                            onChange={() => setVacationType(prev => ({ ...prev, [student.id]: 'single' }))}
+                          />
+                          يوم واحد
+                        </label>
+                        <label className="flex items-center gap-1">
+                          <input
+                            type="radio"
+                            name={`vacType-table-${student.id}`}
+                            checked={vacationType[student.id] === 'multiple'}
+                            onChange={() => setVacationType(prev => ({ ...prev, [student.id]: 'multiple' }))}
+                          />
+                          أكثر من يوم
+                        </label>
+                      </div>
                       <button
                         className="bg-green-600 text-white px-2 py-1 rounded text-xs disabled:opacity-50"
-                        onClick={() => {
-                          if (!vacationDates[student.id] || !vacationReasons[student.id]) {
-                            setError(prev => ({
-                              ...prev,
-                              [student.id]: !vacationDates[student.id]
-                                ? 'يرجى إدخال التاريخ'
-                                : !vacationReasons[student.id]
-                                ? 'يرجى إدخال سبب الإجازة'
-                                : null,
-                            }));
-                          } else {
-                            setError(prev => ({ ...prev, [student.id]: null }));
-                            handleAddVacation(student.id);
-                          }
-                        }}
+                        onClick={() => handleAddVacation(student.id)}
                         disabled={saving[student.id]}
                       >
                         {saving[student.id] ? 'جاري الحفظ...' : 'إضافة'}
                       </button>
-                      {error[student.id] && (
+                      {(error[student.id] || true) && (
                         <div className="flex flex-col gap-1 mt-1">
-                          <input
-                            type="date"
-                            className="border rounded p-1 text-black"
-                            value={vacationDates[student.id] || ''}
-                            onChange={e => setVacationDates(prev => ({ ...prev, [student.id]: e.target.value }))}
-                            autoFocus
-                          />
+                          {(vacationType[student.id] || 'single') === 'single' ? (
+                            <input
+                              type="date"
+                              className="border rounded p-1 text-black"
+                              value={vacationDates[student.id]?.from || ''}
+                              onChange={e => setVacationDates(prev => ({
+                                ...prev,
+                                [student.id]: { from: e.target.value, to: '' }
+                              }))}
+                              autoFocus
+                              placeholder="تاريخ الإجازة"
+                            />
+                          ) : (
+                            <div className="flex gap-2">
+                              <input
+                                type="date"
+                                className="border rounded p-1 text-black"
+                                value={vacationDates[student.id]?.from || ''}
+                                onChange={e => setVacationDates(prev => ({
+                                  ...prev,
+                                  [student.id]: { ...prev[student.id], from: e.target.value, to: prev[student.id]?.to || '' }
+                                }))}
+                                autoFocus
+                                placeholder="من"
+                              />
+                              <input
+                                type="date"
+                                className="border rounded p-1 text-black"
+                                value={vacationDates[student.id]?.to || ''}
+                                onChange={e => setVacationDates(prev => ({
+                                  ...prev,
+                                  [student.id]: { ...prev[student.id], from: prev[student.id]?.from || '', to: e.target.value }
+                                }))}
+                                placeholder="إلى"
+                              />
+                            </div>
+                          )}
                           <input
                             type="text"
                             className="border rounded p-1 text-black"
@@ -625,7 +764,7 @@ export default function StudentVacation() {
                             value={vacationReasons[student.id] || ''}
                             onChange={e => setVacationReasons(prev => ({ ...prev, [student.id]: e.target.value }))}
                           />
-                          <span className="text-red-600 text-xs">{error[student.id]}</span>
+                          {error[student.id] && <span className="text-red-600 text-xs">{error[student.id]}</span>}
                         </div>
                       )}
                     </div>
