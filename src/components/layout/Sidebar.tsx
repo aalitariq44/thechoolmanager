@@ -32,7 +32,7 @@ function Sidebar(): JSX.Element {
           </svg>
         </span>
         <span className="text-gray-700 dark:text-gray-300">{user?.email}</span>
-        
+
       </div>
 
       <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">لوحة التحكم</h2>
@@ -77,12 +77,15 @@ function Sidebar(): JSX.Element {
           <span className="text-gray-700 dark:text-gray-300">التلاميذ</span>
         </div>
 
+        {/* الكتب المستلمة */}
+        {/*
         <div onClick={() => router.push('/features/books')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
           <span className="text-gray-700 dark:text-gray-300">الكتب المستلمة</span>
         </div>
+        
 
         <div onClick={() => router.push('/features/statistics')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -90,7 +93,7 @@ function Sidebar(): JSX.Element {
           </svg>
           <span className="text-gray-700 dark:text-gray-300">الكراس الاحصائي</span>
         </div>
-
+        */}
         <div onClick={() => router.push('/features/furniture')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
@@ -147,12 +150,15 @@ function Sidebar(): JSX.Element {
           <span className="text-gray-700 dark:text-gray-300">الصادرات</span>
         </div>
 
+        {/* الواردات */}
+        {/*
         <div onClick={() => router.push('/features/incoming')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M17 13l-5 5m0 0l-5-5m5 5V6" />
           </svg>
           <span className="text-gray-700 dark:text-gray-300">الواردات</span>
         </div>
+        */}
 
         <div onClick={() => router.push('/features/vacation')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
