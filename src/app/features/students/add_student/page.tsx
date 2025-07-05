@@ -3,6 +3,7 @@
 import { addDoc, collection } from 'firebase/firestore';
 import { useState } from 'react';
 import { db } from '../../../../firebase/config';
+import { useRouter } from 'next/navigation';
 
 interface StudentData {
   registrationNumber: string;
@@ -123,6 +124,7 @@ export default function StudentRecord() {
       year: `${currentYear} - ${currentYear + 1}`,
     },
   ]);
+  const router = useRouter();
 
   const addGradeColumn = () => {
     const lastColumn = gradeColumns[gradeColumns.length - 1];
@@ -240,17 +242,23 @@ export default function StudentRecord() {
   };
 
   return (
-    <div className="bg-white min-h-screen"> {/* New wrapper to force full white background */}
+    <div className="bg-white min-h-screen">
       <div className="container mx-auto p-4 text-right bg-white text-black" dir="rtl">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-black">اضافة طالب جديد</h1>
-          <div className="space-x-4 space-x-reverse">
+          <div className="space-x-4 space-x-reverse flex">
             
             <button 
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() => alert('قريباً - ميزة إضافة صورة الطالب')}
             >
               إضافة صورة الطالب
+            </button>
+            <button
+              className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+              onClick={() => router.push('/features/students/add_student_group')}
+            >
+              إضافة مجموعة طلاب
             </button>
           </div>
         </div>
