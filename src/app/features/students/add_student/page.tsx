@@ -214,6 +214,10 @@ export default function StudentRecord() {
         alert('الرجاء إدخال اسم الطالب ورقم القيد على الأقل');
         return;
       }
+      if (!studentData.currentClass || !studentData.currentSection) {
+        alert('الرجاء اختيار الصف الحالي والشعبة الحالية');
+        return;
+      }
 
       const studentDoc = {
         personalInfo: studentData,
@@ -325,6 +329,7 @@ export default function StudentRecord() {
                 value={studentData.currentClass}
                 onChange={(e) => handleInputChange('currentClass', e.target.value)}
                 className="w-full p-2 border rounded bg-white text-black"
+                required
               >
                 <option value="">اختر الصف</option>
                 {allGrades.map((grade) => (
@@ -340,6 +345,7 @@ export default function StudentRecord() {
                 value={studentData.currentSection}
                 onChange={(e) => handleInputChange('currentSection', e.target.value)}
                 className="w-full p-2 border rounded bg-white text-black"
+                required
               >
                 <option value="">اختر الشعبة</option>
                 {sectionLetters.map((letter) => (

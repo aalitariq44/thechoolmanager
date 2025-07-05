@@ -115,8 +115,12 @@ export default function ViewStudentRecord() {
     return <div className="p-8 text-center">جاري تحميل البيانات...</div>;
   }
 
-  // دمج اسم الطالب مع اسم الأب
-  const fullName = `${studentData.name} ${studentData.fatherName}`;
+  // دالة مساعدة لإظهار "غير موجود" إذا كان الحقل فارغًا
+  const displayValue = (value?: string) =>
+    value && value.trim() !== '' ? value : 'غير موجود';
+
+  // دمج اسم الطالب مع اسم الأب (بدون "غير موجود" لاسم الأب)
+  const fullName = `${displayValue(studentData.name)} ${studentData.fatherName ?? ''}`;
 
   return (
     <div className="bg-white min-h-screen">
@@ -135,7 +139,7 @@ export default function ViewStudentRecord() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <div>
               <label className="block mb-2">رقم القيد</label>
-              <div className="p-2 border rounded bg-white">{studentData.registrationNumber}</div>
+              <div className="p-2 border rounded bg-white">{displayValue(studentData.registrationNumber)}</div>
             </div>
             <div className="col-span-2">
               <label className="block mb-2">الاسم الكامل</label>
@@ -148,15 +152,15 @@ export default function ViewStudentRecord() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <div>
               <label className="block mb-2">تاريخ الولادة</label>
-              <div className="p-2 border rounded bg-white">{studentData.birthDate}</div>
+              <div className="p-2 border rounded bg-white">{displayValue(studentData.birthDate)}</div>
             </div>
             <div>
               <label className="block mb-2">الصف الحالي</label>
-              <div className="p-2 border rounded bg-white">{studentData.currentClass || ''}</div>
+              <div className="p-2 border rounded bg-white">{displayValue(studentData.currentClass)}</div>
             </div>
             <div>
               <label className="block mb-2">الشعبة الحالية</label>
-              <div className="p-2 border rounded bg-white">{studentData.currentSection || ''}</div>
+              <div className="p-2 border rounded bg-white">{displayValue(studentData.currentSection)}</div>
             </div>
           </div>
         </div>
