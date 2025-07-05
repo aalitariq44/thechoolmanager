@@ -49,6 +49,8 @@ export default function StudentClinic() {
   const [loadingClinicVisitsForDay, setLoadingClinicVisitsForDay] = useState(false);
   const [allClinicVisits, setAllClinicVisits] = useState<(ClinicVisitRecord & { student?: StudentData })[]>([]);
   const [showAddClinicVisit, setShowAddClinicVisit] = useState(false);
+  const [schoolName, setSchoolName] = useState<string>(''); // اسم المدرسة
+  const [managerName, setManagerName] = useState<string>(''); // اسم المدير
   const router = useRouter();
 
   useEffect(() => {
@@ -120,6 +122,24 @@ export default function StudentClinic() {
       setAllClinicVisits(visits);
     });
     return () => unsubscribe();
+  }, []);
+
+  // جلب بيانات الإعدادات (اسم المدرسة واسم المدير)
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const q = collection(db, "settings");
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          setSchoolName(data.schoolName || '');
+          setManagerName(data.managerName || '');
+        }
+      } catch (e) {
+        // يمكن تجاهل الخطأ أو عرضه
+      }
+    };
+    fetchSettings();
   }, []);
 
   const handleEdit = (studentId: string) => {
@@ -210,7 +230,7 @@ export default function StudentClinic() {
   // طباعة زيارة عيادة واحدة
   const handlePrintSingleClinicVisit = (student: StudentData, visit: ClinicVisitRecord) => {
     const today = new Date();
-    const dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
     const dayName = dayNames[today.getDay()];
     const dateStr = `${String(today.getDate()).padStart(2, '0')} / ${String(today.getMonth() + 1).padStart(2, '0')} / ${today.getFullYear()}`;
     // حساب العمر
@@ -224,39 +244,19 @@ export default function StudentClinic() {
       }
       age = years.toString();
     }
-    const printContent = `
-      <html dir="rtl">
-      <head>
-        <title>طباعة إحالة للعيادة</title>
-        <style>
-          body { font-family: Tahoma, Arial, sans-serif; direction: rtl; color: #222; margin: 0; padding: 0; }
-          .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-          .header-col { width: 32%; }
-          .header-center { text-align: center; width: 36%; }
-          .header-right, .header-left { font-size: 16px; }
-          .header-right { text-align: right; }
-          .header-left { text-align: left; }
-          .school-name { font-weight: bold; margin-top: 4px; }
-          .title { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 8px; }
-          .pre-text { margin: 24px 0 16px 0; font-size: 17px; }
-          table.medical-table { border-collapse: collapse; width: 100%; margin: 0 auto 24px auto; }
-          table.medical-table th, table.medical-table td { border: 1px solid #888; min-height: 60px; height: 60px; padding: 10px 8px; text-align: center; font-size: 16px; }
-          table.medical-table th { background: #f0f0f0; font-weight: bold; }
-          .signature-row { display: flex; justify-content: flex-end; margin-top: 40px; }
-          .signature { text-align: left; font-size: 16px; margin-left: 40px; }
-        </style>
-      </head>
-      <body>
+
+    // قالب القطعة الواحدة
+    const singlePiece = `
+      <div class="clinic-piece">
         <div class="header-row">
           <div class="header-col header-right">
-            <div>اسم</div>
-            <div class="school-name">المدرسة هنا</div>
+            <div class="school-name">${schoolName || 'اسم المدرسة'}</div>
           </div>
           <div class="header-col header-center">
             <div>إلى/ المركز الصحي</div>
             <div>م/ إحالة</div>
           </div>
-          <div class="header-col header-left">
+          <div class="header-col header-left" style="text-align: right;">
             <div>اليوم: ${dayName}</div>
             <div>التاريخ: ${dateStr}</div>
           </div>
@@ -283,7 +283,64 @@ export default function StudentClinic() {
           </tbody>
         </table>
         <div class="signature-row">
-          <div class="signature">مدير المدرسة</div>
+          <div class="signature-block" style="text-align: center; margin-left: 0;">
+            <div class="signature-label">مدير المدرسة</div>
+            <div>${managerName || ' '}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // نجمع ثلاث نسخ مع فاصل خط
+    const printContent = `
+      <html dir="rtl">
+      <head>
+      <title>طباعة إحالة للعيادة</title>
+      <style>
+        body { font-family: Tahoma, Arial, sans-serif; direction: rtl; color: #222; margin: 0; padding: 0; }
+        .clinic-print-container {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+        .clinic-piece {
+          page-break-inside: avoid;
+          margin: 0;
+          padding: 0 6px;
+        }
+        .piece-separator {
+          border-top: 1px dashed #888;
+          margin: 10px 0;
+          height: 0;
+        }
+        .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .header-col { width: 32%; }
+        .header-center { text-align: center; width: 36%; }
+        .header-right, .header-left { font-size: 13px; }
+        .header-right { text-align: right; }
+        .header-left { text-align: left; }
+        .school-name { font-weight: bold; margin-top: 2px; font-size: 14px; }
+        .title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+        .pre-text { margin: 12px 0 8px 0; font-size: 13px; }
+        table.medical-table { border-collapse: collapse; width: 100%; margin: 0 auto 12px auto; }
+        table.medical-table th, table.medical-table td { border: 1px solid #888; min-height: 32px; height: 32px; padding: 4px 4px; text-align: center; font-size: 12px; }
+        table.medical-table th { background: #f0f0f0; font-weight: bold; }
+        .signature-row { display: flex; justify-content: flex-end; margin-top: 16px; }
+        .signature-block { text-align: left; font-size: 13px; margin-left: 18px; }
+        .signature-label { font-weight: bold; }
+        @media print {
+          body { margin: 0; }
+          .piece-separator { border-top: 1px dashed #888; margin: 10px 0; }
+        }
+      </style>
+      </head>
+      <body>
+        <div class="clinic-print-container">
+          ${singlePiece}
+          <div class="piece-separator"></div>
+          ${singlePiece}
+          <div class="piece-separator"></div>
+          ${singlePiece}
         </div>
       </body>
       </html>

@@ -241,12 +241,7 @@ export default function StudentRecord() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-black">اضافة طالب جديد</h1>
           <div className="space-x-4 space-x-reverse">
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className="px-4 py-2 border rounded hover:bg-blue-100 text-black"
-            >
-              إعدادات المواد
-            </button>
+            
             <button 
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() => alert('قريباً - ميزة إضافة صورة الطالب')}
