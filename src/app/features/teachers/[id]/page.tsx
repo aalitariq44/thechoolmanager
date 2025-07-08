@@ -351,6 +351,29 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
           body {
             margin: 0;
           }
+          .print-teacher-send {
+            font-size: 14px !important;
+          }
+          .print-teacher-send h2,
+          .print-teacher-send h3 {
+            font-size: 17px !important;
+            margin-bottom: 10px !important;
+          }
+          .print-teacher-send table {
+            font-size: 13px !important;
+            margin-bottom: 10px !important;
+          }
+          .print-teacher-send th,
+          .print-teacher-send td {
+            padding: 5px 8px !important;
+          }
+          .print-teacher-send-footer {
+            /* لم يعد مثبتاً في الأسفل */
+            font-size: 14px;
+            background: white;
+            padding-left: 48px;
+            margin-top: 18px;
+          }
         }`}
       </style>
       <div className="container mx-auto p-6 bg-white dark:bg-gray-800" dir="rtl">
@@ -402,7 +425,13 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
 
         {/* نسخة الطباعة */}
         {showPrint && (
-          <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
+          <div
+            className={
+              `fixed inset-0 bg-white text-black p-8 z-50 print:block` +
+              (!simplePrint ? ' print-teacher-send' : '')
+            }
+            style={{ direction: 'rtl' }}
+          >
             {/* رأس الصفحة للطباعة */}
             {simplePrint ? (
               // رأس مبسط: اسم المعلم والتاريخ فقط
@@ -581,11 +610,13 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                 ))}
               </tbody>
             </table>
-            {/* تذييل باسم المدير */}
-            <div style={{ marginTop: 32, textAlign: 'left' }}>
-              <div style={{ fontWeight: 'bold' }}>مدير المدرسة</div>
-              <div>{managerName || ''}</div>
-            </div>
+            {/* تذييل باسم المدير مباشرة بعد جدول كتب الشكر */}
+            {!simplePrint && (
+              <div className="print-teacher-send-footer" style={{ marginTop: 18, textAlign: 'left' }}>
+                <div style={{ fontWeight: 'bold' }}>مدير المدرسة</div>
+                <div>{managerName || ''}</div>
+              </div>
+            )}
           </div>
         )}
         {/* باقي الصفحة */}
@@ -992,3 +1023,4 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     </>
   )
 }
+    
