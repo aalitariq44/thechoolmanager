@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
 import { use } from 'react'
+import { collection, getDocs } from 'firebase/firestore'
 
 interface TrainingCourse {
   name: string;
@@ -68,6 +69,16 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('')
   const [showPrint, setShowPrint] = useState(false);
+  const [schoolName, setSchoolName] = useState<string>('') // اسم المعلم
+  const [managerName, setManagerName] = useState<string>('') // اسم المدير
+  const [printSchoolName, setPrintSchoolName] = useState<string>('') // للطباعة فقط
+  const [printNumber, setPrintNumber] = useState<string>('') // للطباعة فقط
+  const [printModalOpen, setPrintModalOpen] = useState(false); // نافذة الطباعة
+  const [simplePrint, setSimplePrint] = useState(false); // وضع الطباعة البسيطة
+  const [endorsementModalOpen, setEndorsementModalOpen] = useState(false); // نافذة تأييد الاستمرار
+  const [endorsementSchoolName, setEndorsementSchoolName] = useState<string>(''); // اسم الجهة للتأييد
+  const [endorsementNumber, setEndorsementNumber] = useState<string>(''); // العدد للتأييد
+  const [showEndorsementPrint, setShowEndorsementPrint] = useState(false); // عرض صفحة التأييد للطباعة
 
   useEffect(() => {
     const fetchTeacher = async () => {
@@ -85,6 +96,24 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     }
     fetchTeacher()
   }, [resolvedParams.id])
+
+  // جلب بيانات الإعدادات
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const q = collection(db, "settings");
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          setSchoolName(data.schoolName || '');
+          setManagerName(data.managerName || '');
+        }
+      } catch (e) {
+        // يمكن تجاهل الخطأ أو عرضه
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleInputChange = (field: keyof Teacher, value: string) => {
     setTeacher(prev => prev ? { ...prev, [field]: value } : null)
@@ -125,12 +154,48 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // نافذة الطباعة لجمع اسم المعلم والعدد
   const handlePrint = () => {
+    setPrintSchoolName('');
+    setPrintNumber('');
+    setPrintModalOpen(true);
+  };
+
+  // تنفيذ الطباعة بعد جمع البيانات
+  const doPrint = () => {
+    setPrintModalOpen(false);
     setShowPrint(true);
     setTimeout(() => {
       window.print();
       setShowPrint(false);
-    }, 100); // Allow DOM to update
+    }, 100);
+  };
+
+  // زر طباعة بيانات المعلم (بدون نافذة)
+  const handleSimplePrint = () => {
+    setSimplePrint(true);
+    setShowPrint(true);
+    setTimeout(() => {
+      window.print();
+      setShowPrint(false);
+      setSimplePrint(false);
+    }, 100);
+  };
+
+  // نافذة طباعة تأييد الاستمرار
+  const handleEndorsementPrint = () => {
+    setEndorsementSchoolName('');
+    setEndorsementNumber('');
+    setEndorsementModalOpen(true);
+  };
+
+  const doEndorsementPrint = () => {
+    setEndorsementModalOpen(false);
+    setShowEndorsementPrint(true);
+    setTimeout(() => {
+      window.print();
+      setShowEndorsementPrint(false);
+    }, 100);
   };
 
   const graduationYears = Array.from(
@@ -143,11 +208,139 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   }
 
   if (!teacher) {
-    return <div className="text-center p-6">لم يتم العثور على المدرس</div>
+    return <div className="text-center p-6">لم يتم العثور على المعلم</div>
   }
 
   return (
     <>
+      {/* نافذة اختيار بيانات الطباعة */}
+      {printModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">بيانات الطباعة</h2>
+            <div className="flex flex-col gap-2 mb-4">
+              <label className="flex flex-col gap-1 text-gray-900 dark:text-gray-100">
+                <span>اسم الجهة :</span>
+                <input
+                  type="text"
+                  value={printSchoolName}
+                  onChange={e => setPrintSchoolName(e.target.value)}
+                  className="border rounded px-2 py-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                  placeholder="ادخل اسم الجهة"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-gray-900 dark:text-gray-100">
+                <span>العدد :</span>
+                <input
+                  type="text"
+                  value={printNumber}
+                  onChange={e => setPrintNumber(e.target.value)}
+                  className="border rounded px-2 py-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                  placeholder="ادخل العدد"
+                />
+              </label>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="bg-gray-300 text-gray-900 px-4 py-2 rounded hover:bg-gray-400 transition-colors font-bold"
+                onClick={() => setPrintModalOpen(false)}
+              >
+                إلغاء
+              </button>
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors font-bold"
+                onClick={doPrint}
+                disabled={!printSchoolName}
+              >
+                طباعة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* نافذة تأييد الاستمرار */}
+      {endorsementModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">بيانات التأييد</h2>
+            <div className="flex flex-col gap-2 mb-4">
+              <label className="flex flex-col gap-1 text-gray-900 dark:text-gray-100">
+                <span>اسم الجهة :</span>
+                <input
+                  type="text"
+                  value={endorsementSchoolName}
+                  onChange={e => setEndorsementSchoolName(e.target.value)}
+                  className="border rounded px-2 py-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                  placeholder="ادخل اسم الجهة"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-gray-900 dark:text-gray-100">
+                <span>العدد :</span>
+                <input
+                  type="text"
+                  value={endorsementNumber}
+                  onChange={e => setEndorsementNumber(e.target.value)}
+                  className="border rounded px-2 py-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                  placeholder="ادخل العدد"
+                />
+              </label>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="bg-gray-300 text-gray-900 px-4 py-2 rounded hover:bg-gray-400 transition-colors font-bold"
+                onClick={() => setEndorsementModalOpen(false)}
+              >
+                إلغاء
+              </button>
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors font-bold"
+                onClick={doEndorsementPrint}
+                disabled={!endorsementSchoolName}
+              >
+                طباعة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* صفحة طباعة تأييد الاستمرار */}
+      {showEndorsementPrint && (
+        <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div style={{ width: '32%', textAlign: 'right', fontSize: 13 }}>
+                <div style={{ fontWeight: 'bold', marginTop: 2, fontSize: 14 }}>{schoolName || 'اسم مدرستي'}</div>
+              </div>
+              <div style={{ width: '36%', textAlign: 'center' }}>
+                <div>الى / {endorsementSchoolName || ''}</div>
+                <div>م / تأييد استمرارية</div>
+              </div>
+              <div style={{ width: '32%', textAlign: 'left', fontSize: 13 }}>
+                <div>العدد: {endorsementNumber || ''}</div>
+                <div>
+                  التاريخ: {
+                    (() => {
+                      const today = new Date();
+                      return `${String(today.getDate()).padStart(2, '0')} / ${String(today.getMonth() + 1).padStart(2, '0')} / ${today.getFullYear()}`;
+                    })()
+                  }
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', margin: '32px 0 24px 0', textAlign: 'center' }}>
+              نؤيد لكم بأن ({teacher.fullName}) هو احد معلمي مدرستنا للعام الدراسي 2025-2026  وما زال مستمر بالدوام .<br />
+              وبناءا على طلب زود بهذا التأييد بتاريخ كتابة تاريخ اليوم
+              <br />
+              مع فائق الشكر والتقدير
+            </div>
+          </div>
+          {/* تذييل باسم المدير */}
+          <div style={{ marginTop: 32, textAlign: 'left' }}>
+            <div style={{ fontWeight: 'bold' }}>مدير المدرسة</div>
+            <div>{managerName || ''}</div>
+          </div>
+        </div>
+      )}
       {/* إخفاء ترويسة وتذييل الطباعة في المتصفح */}
       <style>
         {`@media print {
@@ -164,7 +357,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
         {/* زر الطباعة */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-            {isEditing ? 'تعديل بيانات المدرس' : 'عرض بيانات المدرس'}
+            {isEditing ? 'تعديل بيانات المعلم' : 'عرض بيانات المعلم'}
           </h1>
           <div className="flex gap-2">
             <button
@@ -183,12 +376,26 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                 حفظ التغييرات
               </button>
             )}
-            {/* زر الطباعة */}
+            {/* زر طباعة بيانات المعلم */}
+            <button
+              onClick={handleSimplePrint}
+              className="bg-blue-600 text-white px-4 py-2 rounded print:hidden"
+            >
+              طباعة بيانات المعلم
+            </button>
+            {/* زر ارسال بيانات المعلم (الوضع الحالي) */}
             <button
               onClick={handlePrint}
               className="bg-yellow-500 text-white px-4 py-2 rounded print:hidden"
             >
-              طباعة البيانات
+              ارسال بيانات المعلم
+            </button>
+            {/* زر طباعة تأييد استمرار */}
+            <button
+              onClick={handleEndorsementPrint}
+              className="bg-purple-600 text-white px-4 py-2 rounded print:hidden"
+            >
+              طباعة تأييد استمرار
             </button>
           </div>
         </div>
@@ -196,7 +403,60 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
         {/* نسخة الطباعة */}
         {showPrint && (
           <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
-            <h2 className="text-2xl font-bold mb-4 text-center">بيانات المدرس</h2>
+            {/* رأس الصفحة للطباعة */}
+            {simplePrint ? (
+              // رأس مبسط: اسم المعلم والتاريخ فقط
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div style={{ width: '32%', textAlign: 'right', fontSize: 13 }}>
+                    <div style={{ fontWeight: 'bold', marginTop: 2, fontSize: 14 }}>{schoolName || 'اسم مدرستي'}</div>
+                  </div>
+                  <div style={{ width: '36%', textAlign: 'center' }}></div>
+                  <div style={{ width: '32%', textAlign: 'left', fontSize: 13 }}>
+                    <div>
+                      التاريخ: {
+                        (() => {
+                          const today = new Date();
+                          return `${String(today.getDate()).padStart(2, '0')} / ${String(today.getMonth() + 1).padStart(2, '0')} / ${today.getFullYear()}`;
+                        })()
+                      }
+                    </div>
+                  </div>
+                </div>
+               
+              </div>
+            ) : (
+              // الرأس الحالي (مع اسم الجهة والعدد)
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  {/* العمود الأيمن: اسم مدرستي */}
+                  <div style={{ width: '32%', textAlign: 'right', fontSize: 13 }}>
+                    <div style={{ fontWeight: 'bold', marginTop: 2, fontSize: 14 }}>{schoolName || 'اسم مدرستي'}</div>
+                  </div>
+                  {/* العمود الأوسط: إلى / اسم المعلم المرسل إليها */}
+                  <div style={{ width: '36%', textAlign: 'center' }}>
+                    <div>الى / {printSchoolName || ''}</div>
+                    <div>م / ارسال بيانات المعلم</div>
+                  </div>
+                  {/* العمود الأيسر: العدد والتاريخ */}
+                  <div style={{ width: '32%', textAlign: 'left', fontSize: 13 }}>
+                    <div>العدد: {printNumber || ''}</div>
+                    <div>
+                      التاريخ: {
+                        (() => {
+                          const today = new Date();
+                          return `${String(today.getDate()).padStart(2, '0')} / ${String(today.getMonth() + 1).padStart(2, '0')} / ${today.getFullYear()}`;
+                        })()
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 'bold' }}>
+                  ندرج اليكم بيانات المعلم ({teacher.fullName}) للتفضل بالعلم مع التقدير:
+                </div>
+              </div>
+            )}
+            <h2 className="text-2xl font-bold mb-4 text-center">بيانات المعلم</h2>
             <table className="w-full mb-4 border">
               <tbody>
                 <tr>
@@ -321,6 +581,11 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                 ))}
               </tbody>
             </table>
+            {/* تذييل باسم المدير */}
+            <div style={{ marginTop: 32, textAlign: 'left' }}>
+              <div style={{ fontWeight: 'bold' }}>مدير المدرسة</div>
+              <div>{managerName || ''}</div>
+            </div>
           </div>
         )}
         {/* باقي الصفحة */}
