@@ -327,9 +327,9 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 'bold', margin: '32px 0 24px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: 18, fontWeight: 'bold', margin: '32px 0 24px 0', textAlign: 'right' }}>
               نؤيد لكم بأن ({teacher.fullName}) هو احد معلمي مدرستنا للعام الدراسي 2025-2026  وما زال مستمر بالدوام .<br />
-              وبناءا على طلب زود بهذا التأييد بتاريخ كتابة تاريخ اليوم
+              وبناءا على طلب زود بهذا التأييد.
               <br />
               مع فائق الشكر والتقدير
             </div>
