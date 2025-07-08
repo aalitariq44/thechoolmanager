@@ -87,6 +87,7 @@ export default function SchoolScheduleApp({
   const [currentClass, setCurrentClass] = useState<string>('');
   const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true); // جديد: حالة التحميل الأولية
 
   // بيانات إنشاء جدول جديد
   const [newSchedule, setNewSchedule] = useState<NewScheduleForm>({
@@ -102,8 +103,11 @@ export default function SchoolScheduleApp({
     if (initialSchedule) {
       setCurrentSchedule(initialSchedule);
       setCurrentClass(initialSchedule.classes?.[0] || '');
+      setIsInitialLoading(false); // إذا كان هناك جدول مبدئي، لا يوجد تحميل أولي
       return;
     }
+
+    setIsInitialLoading(true); // ابدأ التحميل الأولي
     const q = query(collection(db, 'schedules'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const schedulesData: Schedule[] = snapshot.docs.map(doc => ({
@@ -117,6 +121,10 @@ export default function SchoolScheduleApp({
         isCurrent: doc.data().isCurrent || false
       }));
       setSchedules(schedulesData);
+      setIsInitialLoading(false); // انتهى التحميل الأولي
+    }, (error) => {
+      console.error("Error fetching schedules:", error);
+      setIsInitialLoading(false); // انتهى التحميل حتى لو كان هناك خطأ
     });
 
     return () => unsubscribe();
@@ -470,53 +478,61 @@ export default function SchoolScheduleApp({
           </div>
 
           {/* قائمة الجداول */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {schedules.map(schedule => (
-              <div key={schedule.id} className={`bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4 
+          {isInitialLoading ? ( // جديد: عرض دائرة التحميل إذا كان التحميل الأولي جارياً
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+              <p className="mr-4 text-lg text-slate-600 dark:text-slate-300">جاري تحميل الجداول...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {schedules.map(schedule => (
+                <div key={schedule.id} className={`bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4 
                                               hover:shadow-md transition-shadow border ${schedule.isCurrent ? 'border-blue-500' : 'border-slate-200 dark:border-slate-700'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{schedule.name}</h3>
-                  {schedule.isCurrent && (
-                    <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded ml-2">الجدول الحالي</span>
-                  )}
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-                  عدد الحصص: {schedule.dailyLessons}
-                </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-                  أيام العمل: {schedule.workingDays.join(', ')}
-                </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  عدد الصفوف: {schedule.classes.length}
-                </p>
-                <div className="flex space-x-2 space-x-reverse">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{schedule.name}</h3>
+                    {schedule.isCurrent && (
+                      <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded ml-2">الجدول الحالي</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
+                    عدد الحصص: {schedule.dailyLessons}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
+                    أيام العمل: {schedule.workingDays.join(', ')}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    عدد الصفوف: {schedule.classes.length}
+                  </p>
+                  <div className="flex space-x-2 space-x-reverse">
+                    <button
+                      onClick={() => openSchedule(schedule)}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-medium transition-colors"
+                    >
+                      فتح
+                    </button>
+                    <button
+                      onClick={() => deleteSchedule(schedule.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-medium transition-colors"
+                    >
+                      حذف
+                    </button>
+                  </div>
                   <button
-                    onClick={() => openSchedule(schedule)}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-medium transition-colors"
+                    onClick={() => setCurrentScheduleFlag(schedule.id)}
+                    disabled={schedule.isCurrent || isLoading}
+                    className={`mt-3 w-full py-2 rounded font-medium transition-colors ${schedule.isCurrent
+                      ? 'bg-blue-400 text-white cursor-not-allowed'
+                      : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
                   >
-                    فتح
-                  </button>
-                  <button
-                    onClick={() => deleteSchedule(schedule.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-medium transition-colors"
-                  >
-                    حذف
+                    {schedule.isCurrent ? 'الجدول الحالي' : 'تعيين كجدول حالي'}
                   </button>
                 </div>
-                <button
-                  onClick={() => setCurrentScheduleFlag(schedule.id)}
-                  disabled={schedule.isCurrent || isLoading}
-                  className={`mt-3 w-full py-2 rounded font-medium transition-colors ${schedule.isCurrent
-                    ? 'bg-blue-400 text-white cursor-not-allowed'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                >
-                  {schedule.isCurrent ? 'الجدول الحالي' : 'تعيين كجدول حالي'}
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {schedules.length === 0 && (
+
+          {!isInitialLoading && schedules.length === 0 && ( // جديد: عرض رسالة عدم وجود جداول فقط إذا لم يكن هناك تحميل وعدد الجداول صفر
             <div className="text-center py-12">
               <p className="text-slate-500 dark:text-slate-400 text-lg">لا توجد جداول مدرسية حتى الآن</p>
               <p className="text-slate-400 dark:text-slate-500">انقر على "إنشاء جدول جديد" لبدء إنشاء أول جدول</p>

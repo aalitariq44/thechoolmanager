@@ -68,7 +68,7 @@ export default function EmployeesList() {
     <div className="container mx-auto p-6" dir="rtl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">قائمة الموظفين ({employees.length})</h1>
-        <Link 
+        <Link
           href="/features/employees/add_employee"
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
         >
@@ -111,7 +111,7 @@ export default function EmployeesList() {
                   <td className="border p-2 text-gray-900 dark:text-gray-100">{employee.fullName}</td>
                   <td className="border p-2 text-gray-900 dark:text-gray-100">{employee.jobTitle}</td>
                   <td className="border p-2 text-gray-900 dark:text-gray-100">{employee.phoneNumber}</td>
-                  <td className="border p-2 text-gray-900 dark:text-gray-100">{new Date(employee.jobStartDate).toLocaleDateString('ar-IQ')}</td>
+                  <td className="border p-2 text-gray-900 dark:text-gray-100">{new Date(employee.jobStartDate).toLocaleDateString('en-US')}</td>
                   <td className="border p-2">
                     <div className="flex gap-2">
                       <Link
@@ -120,7 +120,7 @@ export default function EmployeesList() {
                       >
                         عرض وتعديل
                       </Link>
-                      <button 
+                      <button
                         className="bg-red-500 text-white px-2 py-1 rounded text-sm"
                         onClick={() => handleDelete(employee.id)}
                       >
