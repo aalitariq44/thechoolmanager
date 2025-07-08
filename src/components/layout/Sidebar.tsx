@@ -119,7 +119,7 @@ function Sidebar(): JSX.Element {
           <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <span className="text-gray-700 dark:text-gray-300">الدرجات</span>
+          <span className="text-gray-700 dark:text-gray-300"> درجات الطلاب</span>
         </div>
 
         <div onClick={() => router.push('/features/attendance')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
@@ -194,6 +194,15 @@ function Sidebar(): JSX.Element {
           </svg>
           <span className="text-gray-700 dark:text-gray-300">ارسال الدرجات</span>
         </div>
+        {/* سجل الدرجات */}
+        <div onClick={() => router.push('/features/grades-record')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
+          {/* grades record icon */}
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <path d="M8 8h8M8 12h8M8 16h4" />
+          </svg>
+          <span className="text-gray-700 dark:text-gray-300">سجل الدرجات</span>
+        </div>
         {/* دفتر الخطة */}
         <div onClick={() => router.push('/features/plan-book')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
           {/* plan book icon */}
@@ -204,6 +213,15 @@ function Sidebar(): JSX.Element {
             <path d="M4 8h16" />
           </svg>
           <span className="text-gray-700 dark:text-gray-300">دفتر الخطة</span>
+        </div>
+        {/* التأييد */}
+        <div onClick={() => router.push('/features/endorsement')} className="mb-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer transition-colors duration-200 flex items-center gap-2">
+          {/* endorsement icon */}
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 13l4 4L19 7" />
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+          </svg>
+          <span className="text-gray-700 dark:text-gray-300">التأييد</span>
         </div>
         {/* قسم الإعدادات */}
         <div className="mt-6 mb-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
