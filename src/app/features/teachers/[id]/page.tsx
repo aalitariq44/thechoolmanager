@@ -305,17 +305,17 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
       )}
       {/* صفحة طباعة تأييد الاستمرار */}
       {showEndorsementPrint && (
-        <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
-          <div style={{ marginBottom: 18 }}>
+        <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-              <div style={{ width: '32%', textAlign: 'right', fontSize: 13 }}>
-                <div style={{ fontWeight: 'bold', marginTop: 2, fontSize: 14 }}>{schoolName || 'اسم مدرستي'}</div>
+              <div style={{ width: '32%', textAlign: 'right', fontSize: 18 }}>
+                <div style={{ fontWeight: 'bold', marginTop: 2, fontSize: 18 }}>{schoolName || 'اسم مدرستي'}</div>
               </div>
               <div style={{ width: '36%', textAlign: 'center' }}>
                 <div>الى / {endorsementSchoolName || ''}</div>
                 <div>م / تأييد استمرارية</div>
               </div>
-              <div style={{ width: '32%', textAlign: 'left', fontSize: 13 }}>
+              <div style={{ width: '32%', textAlign: 'left', fontSize: 18 }}>
                 <div>العدد: {endorsementNumber || ''}</div>
                 <div>
                   التاريخ: {
@@ -335,9 +335,9 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
             </div>
           </div>
           {/* تذييل باسم المدير */}
-          <div style={{ marginTop: 32, textAlign: 'left' }}>
-            <div style={{ fontWeight: 'bold' }}>مدير المدرسة</div>
-            <div>{managerName || ''}</div>
+          <div style={{ textAlign: 'left', marginLeft: 100, marginBottom: 100 }}>
+            <div style={{ fontWeight: 'bold', fontSize: 18 }}>مدير المدرسة</div>
+            <div style={{ fontWeight: 'bold', fontSize: 18 }}>{managerName || ''}</div>
           </div>
         </div>
       )}
