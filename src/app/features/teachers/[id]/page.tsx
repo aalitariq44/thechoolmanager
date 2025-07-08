@@ -311,11 +311,11 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
               <div style={{ width: '32%', textAlign: 'right', fontSize: 18 }}>
                 <div style={{ fontWeight: 'bold', marginTop: 2, fontSize: 18 }}>{schoolName || 'اسم مدرستي'}</div>
               </div>
-              <div style={{ width: '36%', textAlign: 'center' }}>
+              <div style={{ width: '36%', textAlign: 'center',fontWeight: 'bold' }}>
                 <div>الى / {endorsementSchoolName || ''}</div>
                 <div>م / تأييد استمرارية</div>
               </div>
-              <div style={{ width: '32%', textAlign: 'left', fontSize: 18 }}>
+              <div style={{ width: '32%', textAlign: 'left', fontSize: 18, fontWeight: 'bold' }}>
                 <div>العدد: {endorsementNumber || ''}</div>
                 <div>
                   التاريخ: {
