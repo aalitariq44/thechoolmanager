@@ -620,7 +620,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
           </div>
         )}
         {/* باقي الصفحة */}
-        <div className={showPrint ? "hidden" : ""}>
+        <div className={showPrint || showEndorsementPrint ? "hidden" : ""}>
           {/* Personal Image + Main Form Section in flex */}
           <div className="flex flex-col md:flex-row gap-6">
             {/* Personal Image Section */}
@@ -1023,4 +1023,3 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     </>
   )
 }
-    
