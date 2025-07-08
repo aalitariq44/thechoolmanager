@@ -89,6 +89,12 @@ export default function SchoolScheduleApp({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true); // جديد: حالة التحميل الأولية
 
+  // حالات الطباعة
+  const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
+  const [selectedClassesForPrint, setSelectedClassesForPrint] = useState<string[]>([]);
+  const [printOrientation, setPrintOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [schedulesPerPage, setSchedulesPerPage] = useState<string>('1');
+
   // بيانات إنشاء جدول جديد
   const [newSchedule, setNewSchedule] = useState<NewScheduleForm>({
     name: '',
@@ -354,6 +360,185 @@ export default function SchoolScheduleApp({
     }
   };
 
+  // --- دوال الطباعة ---
+
+  // تبديل اختيار صف للطباعة
+  const togglePrintClass = (className: string) => {
+    setSelectedClassesForPrint(prev =>
+      prev.includes(className)
+        ? prev.filter(c => c !== className)
+        : [...prev, className]
+    );
+  };
+
+  // تبديل اختيار كل الصفوف للطباعة
+  const toggleSelectAllPrintClasses = () => {
+    if (currentSchedule) {
+      if (selectedClassesForPrint.length === currentSchedule.classes.length) {
+        setSelectedClassesForPrint([]);
+      } else {
+        setSelectedClassesForPrint(currentSchedule.classes);
+      }
+    }
+  };
+
+  // تنفيذ الطباعة
+  const handlePrint = () => {
+    if (!currentSchedule || selectedClassesForPrint.length === 0) {
+      alert('يرجى اختيار صف واحد على الأقل للطباعة');
+      return;
+    }
+
+    const schedulesToPrint = selectedClassesForPrint.map(className => ({
+      className,
+      schedule: currentSchedule.schedules[className],
+    }));
+
+    let tablesHTML = '';
+    const isAllOnOnePage = schedulesPerPage === 'all';
+    const numSchedulesPerPage = isAllOnOnePage ? schedulesToPrint.length : parseInt(schedulesPerPage, 10);
+
+    schedulesToPrint.forEach((data, index) => {
+      let tableHeader = '<thead><tr><th>الحصة</th>';
+      currentSchedule.workingDays.forEach(day => {
+        tableHeader += `<th>${day}</th>`;
+      });
+      tableHeader += '</tr></thead>';
+
+      let tableBody = '<tbody>';
+      for (let i = 0; i < currentSchedule.dailyLessons; i++) {
+        tableBody += `<tr><td>${i + 1}</td>`;
+        currentSchedule.workingDays.forEach(day => {
+          const lesson = data.schedule?.[day]?.[i] || '';
+          tableBody += `<td>${lesson}</td>`;
+        });
+        tableBody += '</tr>';
+      }
+      tableBody += '</tbody>';
+
+      const table = `
+        <div class="schedule-container">
+          <h2>جدول ${data.className}</h2>
+          <table class="schedule-print-table">${tableHeader}${tableBody}</table>
+        </div>
+      `;
+      tablesHTML += table;
+
+      if (!isAllOnOnePage && (index + 1) % numSchedulesPerPage === 0 && (index + 1) < schedulesToPrint.length) {
+        tablesHTML += '<div class="page-break"></div>';
+      }
+    });
+
+    // --- Dynamic Styling ---
+    const getPrintStyles = () => {
+      const pageMargin = isAllOnOnePage ? '5mm' : '15mm';
+      let containerStyle = '';
+      let h2Style = '';
+      let tableStyle = '';
+      let cellStyle = '';
+
+      const schedulesCount = isAllOnOnePage ? schedulesToPrint.length : numSchedulesPerPage;
+      const orientationIsLandscape = printOrientation === 'landscape';
+
+      // Determine columns and rows for grid layout
+      let cols = 1;
+      if (orientationIsLandscape) {
+        if (schedulesCount >= 12) cols = 4;
+        else if (schedulesCount >= 9) cols = 3;
+        else if (schedulesCount >= 4) cols = 2;
+        else if (schedulesCount >= 2) cols = 2;
+      } else { // Portrait
+        if (schedulesCount >= 9) cols = 3;
+        else if (schedulesCount >= 4) cols = 2;
+        else if (schedulesCount >= 2) cols = 2;
+      }
+      if (schedulesCount === 3 && orientationIsLandscape) cols = 3;
+      if (schedulesCount === 3 && !orientationIsLandscape) cols = 1;
+
+
+      switch (schedulesPerPage) {
+        case '1': cols = 1; break;
+        case '2': cols = 2; break;
+        case '3': cols = 3; break;
+        case '4': cols = 2; break; // 2x2
+        case '8': cols = 4; break; // 4x2
+        case '9': cols = 3; break; // 3x3
+        case '12': cols = 4; break; // 4x3
+      }
+      if (schedulesPerPage === '2' && !orientationIsLandscape) cols = 1;
+
+
+      const baseFontSize = 10; // points
+      const scaleFactor = Math.sqrt(1 / schedulesCount) * 1.1;
+      const finalFontSize = isAllOnOnePage ? Math.max(baseFontSize * scaleFactor, 4) : baseFontSize - (cols > 2 ? 2 : 0);
+
+      containerStyle = `
+        width: ${100 / cols - 2}%;
+        margin: 1%;
+        border: 1px solid #ccc;
+        page-break-inside: avoid;
+        box-sizing: border-box;
+        float: right; /* Use float for better compatibility */
+      `;
+      h2Style = `font-size: ${finalFontSize * 1.1}pt; margin-bottom: 4px;`;
+      tableStyle = `font-size: ${finalFontSize}pt;`;
+      cellStyle = `padding: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
+
+      return `
+        @page { 
+          size: A4 ${printOrientation}; 
+          margin: ${pageMargin}; 
+        }
+        body { 
+          font-family: 'Amiri', serif; 
+          direction: rtl; 
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          overflow: hidden; /* Hide overflow to prevent unwanted scrollbars */
+        }
+        .schedule-container { ${containerStyle} }
+        h2 { text-align: center; ${h2Style} }
+        .schedule-print-table { border-collapse: collapse; width: 100%; ${tableStyle} }
+        th, td { border: 1px solid black; text-align: center; ${cellStyle} }
+        th { background-color: #f2f2f2; }
+        .page-break { page-break-after: always; clear: both; height: 0; }
+        /* Clearfix for floated elements */
+        body::after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+      `;
+    };
+
+    const printWindow = window.open('', '_blank', 'height=800,width=600');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>طباعة الجداول</title>
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
+              ${getPrintStyles()}
+            </style>
+          </head>
+          <body>
+            ${tablesHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    }
+    setShowPrintModal(false);
+  };
+
   // عرض الصفحة الرئيسية
   if (!currentSchedule) {
     return (
@@ -560,6 +745,12 @@ export default function SchoolScheduleApp({
                 {isLoading ? 'جاري الحفظ...' : 'حفظ'}
               </button>
               <button
+                onClick={() => setShowPrintModal(true)}
+                className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded font-medium transition-colors"
+              >
+                طباعة
+              </button>
+              <button
                 onClick={goBackToHome}
                 className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-medium transition-colors"
               >
@@ -676,6 +867,104 @@ export default function SchoolScheduleApp({
         {!currentClass && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-8 text-center border border-slate-200 dark:border-slate-700">
             <p className="text-slate-500 dark:text-slate-400 text-lg">يرجى اختيار صف من القائمة أعلاه لعرض الجدول</p>
+          </div>
+        )}
+
+        {/* مودال الطباعة */}
+        {showPrintModal && currentSchedule && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">إعدادات الطباعة</h2>
+
+              {/* اختيار الصفوف */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                  الصفوف المراد طباعتها
+                </label>
+                <div className="border border-slate-300 dark:border-slate-600 rounded-lg p-3 max-h-60 overflow-y-auto">
+                  <div className="flex items-center mb-2 pb-2 border-b border-slate-200 dark:border-slate-700">
+                    <input
+                      type="checkbox"
+                      id="select-all-classes"
+                      checked={selectedClassesForPrint.length === currentSchedule.classes.length}
+                      onChange={toggleSelectAllPrintClasses}
+                      className="rounded border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500"
+                    />
+                    <label htmlFor="select-all-classes" className="mr-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      تحديد الكل
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {currentSchedule.classes.map(className => (
+                      <label key={className} className="flex items-center space-x-2 space-x-reverse">
+                        <input
+                          type="checkbox"
+                          checked={selectedClassesForPrint.includes(className)}
+                          onChange={() => togglePrintClass(className)}
+                          className="rounded border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{className}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* خيارات التنسيق */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label htmlFor="orientation" className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                    اتجاه الورقة
+                  </label>
+                  <select
+                    id="orientation"
+                    value={printOrientation}
+                    onChange={(e) => setPrintOrientation(e.target.value as 'portrait' | 'landscape')}
+                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="portrait">عمودي (Portrait)</option>
+                    <option value="landscape">أفقي (Landscape)</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="schedules-per-page" className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                    عدد الجداول في الصفحة
+                  </label>
+                  <select
+                    id="schedules-per-page"
+                    value={schedulesPerPage}
+                    onChange={(e) => setSchedulesPerPage(e.target.value)}
+                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="12">12</option>
+                    <option value="all">الكل في صفحة واحدة</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* أزرار الإجراءات */}
+              <div className="flex space-x-2 space-x-reverse">
+                <button
+                  onClick={handlePrint}
+                  disabled={selectedClassesForPrint.length === 0}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  طباعة
+                </button>
+                <button
+                  onClick={() => setShowPrintModal(false)}
+                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
