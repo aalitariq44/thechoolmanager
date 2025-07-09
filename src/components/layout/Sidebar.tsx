@@ -41,11 +41,11 @@ function Sidebar(): JSX.Element {
         <div className="flex flex-row-reverse items-center gap-2 mb-1 w-full justify-end">
           <span className="text-base font-semibold text-gray-700 dark:text-gray-100 truncate max-w-[120px]">{userName}</span>
           <span className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">
-        {/* user icon */}
-        <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-        </svg>
+            {/* user icon */}
+            <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+            </svg>
           </span>
         </div>
         <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-all w-full text-right">{user?.email}</span>
@@ -266,23 +266,25 @@ function Sidebar(): JSX.Element {
             <span className="text-gray-700 dark:text-gray-300">الإعدادات</span>
           </div>
         </div>
+
+        {/* User Account Section */}
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            onClick={() => router.push('/users')}
+            className="w-full text-right bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-900 dark:text-blue-100 p-2 rounded transition-colors duration-200 font-semibold"
+          >
+            ادارة المستخدمين
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full text-right bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-red-900 dark:text-red-100 p-2 rounded transition-colors duration-200 font-semibold"
+          >
+            تسجيل الخروج
+          </button>
+        </div>
       </div>
 
-      {/* User Account Section */}
-      <div className="mt-4 flex flex-col gap-2">
-        <button
-          onClick={() => router.push('/users')}
-          className="w-full text-right bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-900 dark:text-blue-100 p-2 rounded transition-colors duration-200 font-semibold"
-        >
-          ادارة المستخدمين
-        </button>
-        <button
-          onClick={handleLogout}
-          className="w-full text-right bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-red-900 dark:text-red-100 p-2 rounded transition-colors duration-200 font-semibold"
-        >
-          تسجيل الخروج
-        </button>
-      </div>
+
     </div>
   );
 }
