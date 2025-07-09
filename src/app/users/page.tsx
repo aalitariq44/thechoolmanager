@@ -48,7 +48,7 @@ const UsersPage = () => {
         // Ensure the initial user exists
         const userRef = doc(db, 'users', 'ZtYcYuAB68RiIrmwHS5NsOHLZPG2');
         await setDoc(userRef, {
-          name: 'كاظم',
+          name: 'الاستاذ كاظم',
           uid: 'ZtYcYuAB68RiIrmwHS5NsOHLZPG2',
           role: 'مدير المدرسة',
         }, { merge: true }); // Use merge to avoid overwriting
@@ -148,7 +148,7 @@ const UsersPage = () => {
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="مثلا: معلم، كاتب، مدير"
+                    placeholder="مثلا: معلم، كاتب"
                   />
                 </div>
                 <div className="flex justify-start pt-4 space-x-4 space-x-reverse">
