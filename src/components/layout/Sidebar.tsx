@@ -226,7 +226,14 @@ function Sidebar(): JSX.Element {
             </svg>
             <span className="text-gray-700 dark:text-gray-300">سجل الدرجات</span>
           </div>
-
+          <div onClick={() => router.push('/features/grades-record')} className="mb-1 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer flex items-center gap-2">
+            {/* individual records icon */}
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+            </svg>
+            <span className="text-gray-700 dark:text-gray-300">السجلات الانفرادية </span>
+          </div>
           <div onClick={() => router.push('/features/plan-book')} className="mb-1 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer flex items-center gap-2">
             {/* plan book icon */}
             <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
