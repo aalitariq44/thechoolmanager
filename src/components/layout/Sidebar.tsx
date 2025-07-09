@@ -260,7 +260,7 @@ function Sidebar(): JSX.Element {
       {/* User Account Section */}
       <div className="mt-auto">
         <div
-          onClick={() => router.push('/features/users')}
+          onClick={() => router.push('/users')}
           className="w-full text-right bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 p-2 rounded transition-colors duration-200 mb-2 cursor-pointer"
         >
           ادارة المستخدمين
