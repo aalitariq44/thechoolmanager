@@ -87,21 +87,24 @@ export default function StudentRecord() {
   // Only show active students (those without a leaveDate)
   const filteredStudents = students.filter(student => {
     const searchLower = searchQuery.toLowerCase();
+    // دمج الاسم واسم الأب للبحث
+    const fullName = `${student.personalInfo.name ?? ''} ${student.personalInfo.fatherName ?? ''}`.trim().toLowerCase();
     const matchesSearch = (
-      student.personalInfo.name?.toLowerCase().includes(searchLower) ||
+      fullName.includes(searchLower) ||
       student.personalInfo.registrationNumber?.includes(searchQuery) ||
       student.personalInfo.idNumber?.includes(searchQuery)
     );
-    
     // Only return students without a leaveDate (active students)
     return matchesSearch && !student.personalInfo.leaveDate;
   });
 
   const sortedStudents = [...filteredStudents].sort((a, b) => {
     const direction = sortDirection === 'asc' ? 1 : -1;
-    
     if (sortField === 'name') {
-      return direction * a.personalInfo.name.localeCompare(b.personalInfo.name, 'ar');
+      // الترتيب حسب الاسم الكامل (اسم + اسم الأب)
+      const fullNameA = `${a.personalInfo.name ?? ''} ${a.personalInfo.fatherName ?? ''}`.trim();
+      const fullNameB = `${b.personalInfo.name ?? ''} ${b.personalInfo.fatherName ?? ''}`.trim();
+      return direction * fullNameA.localeCompare(fullNameB, 'ar');
     } else {
       const regNumA = parseInt(a.personalInfo.registrationNumber);
       const regNumB = parseInt(b.personalInfo.registrationNumber);
@@ -284,7 +287,8 @@ export default function StudentRecord() {
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-black">
-                  {index + 1}. {student.personalInfo.name} {student.personalInfo.fatherName || ''}
+                  {index + 1}. {/* عرض الاسم الكامل دائمًا */}
+                  {`${student.personalInfo.name ?? ''} ${student.personalInfo.fatherName ?? ''}`}
                 </h3>
               </div>
               <div className="space-y-2">
@@ -391,7 +395,8 @@ export default function StudentRecord() {
                   onClick={() => handleView(student.id)}
                 >
                   <td className="py-2 px-4 border">{index + 1}</td>
-                  <td className="py-2 px-4 border">{student.personalInfo.name} {student.personalInfo.fatherName}</td>
+                  {/* عرض الاسم الكامل دائمًا */}
+                  <td className="py-2 px-4 border">{`${student.personalInfo.name ?? ''} ${student.personalInfo.fatherName ?? ''}`}</td>
                   <td className="py-2 px-4 border">{student.personalInfo.registrationNumber}</td>
                   <td className="py-2 px-4 border">
                     {student.personalInfo.currentClass || 'غير محدد'} 
