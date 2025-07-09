@@ -20,6 +20,7 @@ const UsersPage = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true); // حالة التحميل
 
   const handleDeleteUser = async (uid: string) => {
     if (window.confirm('هل أنت متأكد أنك تريد حذف هذا المستخدم؟')) {
@@ -36,10 +37,15 @@ const UsersPage = () => {
   };
 
   const fetchUsers = async () => {
-    const usersCollection = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersCollection);
-    const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-    setUsers(usersList);
+    setLoading(true); // بدء التحميل
+    try {
+      const usersCollection = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setUsers(usersList);
+    } finally {
+      setLoading(false); // انتهاء التحميل
+    }
   };
 
   useEffect(() => {
@@ -167,23 +173,32 @@ const UsersPage = () => {
 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
           <h2 className="text-xl font-semibold p-5 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">قائمة المستخدمين</h2>
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {users.map(user => (
-              <li key={user.id} className="p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                <div>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{user.name}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 py-1 px-3 rounded-full">{user.role}</span>
-                </div>
-                <button
-                  onClick={() => handleDeleteUser(user.uid)}
-                  className="bg-red-600 text-white py-1 px-3 rounded-lg shadow hover:bg-red-700 transition"
-                  disabled={user.role === 'مدير المدرسة'}
-                >
-                  حذف
-                </button>
-              </li>
-            ))}
-          </ul>
+          {loading ? (
+            <div className="flex justify-center items-center py-10">
+              <svg className="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {users.map(user => (
+                <li key={user.id} className="p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{user.name}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 py-1 px-3 rounded-full">{user.role}</span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteUser(user.uid)}
+                    className="bg-red-600 text-white py-1 px-3 rounded-lg shadow hover:bg-red-700 transition"
+                    disabled={user.role === 'مدير المدرسة'}
+                  >
+                    حذف
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
