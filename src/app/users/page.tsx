@@ -10,6 +10,7 @@ interface User {
   name: string;
   uid: string;
   role: string;
+  email?: string; // أضف خاصية البريد الإلكتروني
 }
 
 const UsersPage = () => {
@@ -84,6 +85,7 @@ const UsersPage = () => {
         name: name,
         uid: newUser.uid,
         role: role,
+        email: fullEmail, // خزّن البريد الإلكتروني
       });
       setName('');
       setEmailUsername('');
@@ -184,9 +186,14 @@ const UsersPage = () => {
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {users.map(user => (
                 <li key={user.id} className="p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                  <div>
+                  <div className="flex items-center">
                     <span className="font-medium text-gray-900 dark:text-gray-100">{user.name}</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 py-1 px-3 rounded-full">{user.role}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 py-1 px-3 rounded-full mr-4">{user.role}</span>
+                    {user.email && (
+                      <span className="text-xs text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 py-1 px-2 rounded-lg mr-4">
+                        {user.email}
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => handleDeleteUser(user.uid)}
