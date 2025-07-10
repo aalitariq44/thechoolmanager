@@ -393,7 +393,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                     </tr>
                   ) : (
                     teachingSubjects.map((row, idx) => (
-                      <tr key={idx}>
+                      <tr key={idx} className="text-gray-900 dark:text-gray-100">
                         <td className="border px-2 py-2">{row.className}</td>
                         <td className="border px-2 py-2">{row.section}</td>
                         <td className="border px-2 py-2">{row.subject}</td>
@@ -409,6 +409,15 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                     ))
                   )}
                 </tbody>
+                <tfoot>
+                  <tr className="font-bold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700">
+                    <td colSpan={3} className="border px-2 py-2 text-center">المجموع</td>
+                    <td className="border px-2 py-2">
+                      {teachingSubjects.reduce((sum, s) => sum + (parseInt(s.periods, 10) || 0), 0)}
+                    </td>
+                    <td className="border px-2 py-2"></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
             {/* زر حفظ المواد */}
