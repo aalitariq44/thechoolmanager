@@ -1,7 +1,7 @@
 "use client";
 
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { db } from '../../../../../firebase/config';
 import jsPDF from 'jspdf';
@@ -75,9 +75,6 @@ const allGrades = grades;
 
 const sectionLetters = ['أ', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ي'];
 
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 101 }, (_, i) => (currentYear - 50 + i).toString());
-
 export default function EditStudentRecord() {
   const params = useParams();
   // معالجة احتمالية أن يكون studentId مصفوفة أو قيمة مفردة
@@ -86,7 +83,6 @@ export default function EditStudentRecord() {
       ? params['studentId'][0]
       : params['studentId']
     : undefined;
-  const router = useRouter();
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [gradeColumns, setGradeColumns] = useState<GradeColumn[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(initialSubjects.slice(0, -1));
@@ -126,66 +122,6 @@ export default function EditStudentRecord() {
       ...prev,
       [field]: value
     }) : prev);
-  };
-
-  const addGradeColumn = () => {
-    if (!gradeColumns.length) return;
-    const lastColumn = gradeColumns[gradeColumns.length - 1];
-    const lastGradeIndex = grades.indexOf(lastColumn.grade);
-    const nextGrade = lastGradeIndex < grades.length - 1 ? grades[lastGradeIndex + 1] : grades[0];
-    const [lastYear] = lastColumn.year.split(' - ').map(Number);
-
-    const newColumn: GradeColumn = {
-      id: (gradeColumns.length + 1).toString(),
-      grade: nextGrade,
-      grades: Object.fromEntries(selectedSubjects.map(subject => [subject, ''])),
-      year: `${lastYear + 1} - ${lastYear + 2}`
-    };
-    setGradeColumns([...gradeColumns, newColumn]);
-  };
-
-  const removeGradeColumn = (columnId: string) => {
-    setGradeColumns(gradeColumns.filter(column => column.id !== columnId));
-  };
-
-  const handleGradeChange = (columnId: string, subject: string, value: string) => {
-    setGradeColumns(prev => prev.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          grades: {
-            ...column.grades,
-            [subject]: value
-          }
-        };
-      }
-      return column;
-    }));
-  };
-
-  const handleGradeSelection = (columnId: string, grade: string) => {
-    setGradeColumns(prev => prev.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          grade
-        };
-      }
-      return column;
-    }));
-  };
-
-  const handleYearChange = (columnId: string, startYear: string) => {
-    const endYear = (parseInt(startYear) + 1).toString();
-    setGradeColumns(prev => prev.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          year: `${startYear} - ${endYear}`
-        };
-      }
-      return column;
-    }));
   };
 
   const handleSubjectSelection = (subject: string) => {
@@ -238,13 +174,6 @@ export default function EditStudentRecord() {
     setShowSettings(false);
   };
 
-  // حساب المواد المعروضة حسب حالة التعديل
-  const displayedSubjects = editMode
-    ? selectedSubjects
-    : selectedSubjects.filter(subject =>
-        gradeColumns.some(col => (col.grades[subject] && col.grades[subject].trim() !== ''))
-      );
-
   // دالة تصدير PDF
   const handleExportPDF = async () => {
     if (!studentData) return;
@@ -263,7 +192,6 @@ export default function EditStudentRecord() {
       format: 'a4'
     });
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
     // احسب أبعاد الصورة لتناسب الصفحة
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pageWidth - 20;

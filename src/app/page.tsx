@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { auth, db } from '../firebase/config';
 import LoginPage from './login/page';
-import SchoolScheduleApp from './features/schedule/page';
+import { Schedule } from '../types/schedule';
 
 export default function SchoolDashboard() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function SchoolDashboard() {
   const [teacherCount, setTeacherCount] = useState(0);
   const [studentCountLoading, setStudentCountLoading] = useState(true);
   const [teacherCountLoading, setTeacherCountLoading] = useState(true);
-  const [currentSchedule, setCurrentSchedule] = useState<any>(null);
+  const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
   const [loadingCurrentSchedule, setLoadingCurrentSchedule] = useState(false);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function SchoolDashboard() {
         const teachersQuery = collection(db, 'teachers');
         const teachersSnapshot = await getCountFromServer(teachersQuery);
         setTeacherCount(teachersSnapshot.data().count);
-      } catch (error) {
+      } catch {
         setStudentCount(0);
         setTeacherCount(0);
       } finally {
@@ -77,14 +77,21 @@ export default function SchoolDashboard() {
       const schedulesSnap = await (await import('firebase/firestore')).getDocs(q);
       if (!schedulesSnap.empty) {
         const docSnap = schedulesSnap.docs[0];
+        const data = docSnap.data();
         setCurrentSchedule({
           id: docSnap.id,
-          ...docSnap.data()
-        });
+          name: data.name,
+          dailyLessons: data.dailyLessons,
+          workingDays: data.workingDays,
+          classes: data.classes,
+          schedules: data.schedules,
+          createdAt: data.createdAt.toDate().toISOString(),
+          isCurrent: data.isCurrent,
+        } as Schedule);
       } else {
         alert('لا يوجد جدول حالي معين');
       }
-    } catch (error) {
+    } catch {
       alert('حدث خطأ أثناء جلب الجدول الحالي');
     } finally {
       setLoadingCurrentSchedule(false);
@@ -93,9 +100,8 @@ export default function SchoolDashboard() {
 
   // إذا تم اختيار جدول حالي، نعرض صفحة الجدول مباشرة
   if (currentSchedule) {
-    return (
-      <SchoolScheduleApp initialSchedule={currentSchedule} onBack={() => setCurrentSchedule(null)} />
-    );
+    router.push('/features/schedule');
+    return null;
   }
 
   if (loading) {
@@ -105,8 +111,6 @@ export default function SchoolDashboard() {
   if (!user) {
     return <LoginPage />;
   }
-
-  const sections = [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300" dir="rtl">

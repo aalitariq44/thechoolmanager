@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 
 interface Expense {
@@ -36,7 +36,6 @@ export default function ExpensesPage() {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [isMonthModalOpen, setIsMonthModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false); // New state for expense fetching loading
 

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { collection, onSnapshot, query, orderBy, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { Search, Plus, Edit3, Trash2, Package, Eye, X, Check } from 'lucide-react';
@@ -310,7 +311,7 @@ const FurniturePage = () => {
                     <>
                       {item.imageUrl && (
                         <div className="w-full h-32 bg-gray-200 dark:bg-gray-600 rounded-lg mb-3 overflow-hidden">
-                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                          <Image src={item.imageUrl} alt={item.name} width={300} height={128} className="w-full h-full object-cover" />
                         </div>
                       )}
                       <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-2">{item.name}</h3>

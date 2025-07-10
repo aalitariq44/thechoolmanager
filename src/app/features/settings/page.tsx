@@ -1,9 +1,9 @@
 "use client";
 
-import { addDoc, collection, onSnapshot, query, orderBy, where, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { ReactNode, useEffect, useState } from 'react';
+import { addDoc, collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { db } from '../../../firebase/config';
-import { useRouter } from 'next/navigation';
 
 const schoolTypes = [
   "ابتدائية",
@@ -135,7 +135,8 @@ export default function SettingsPage() {
         setDocumentId(docRef.id);
       }
       setSaveSuccess(true);
-    } catch (err: any) {
+    } catch (err) {
+      console.error("Error saving settings: ", err);
       setSaveError("حدث خطأ أثناء الحفظ");
     } finally {
       setSaving(false);
@@ -168,13 +169,12 @@ export default function SettingsPage() {
           );
         }
       } catch (e) {
-        // يمكن تجاهل الخطأ أو عرضه
+        console.error("Error fetching settings: ", e);
       } finally {
         setLoading(false);
       }
     };
     fetchSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // تحديث اختيار نوع المدرسة (checkbox متعدد)
@@ -197,7 +197,6 @@ export default function SettingsPage() {
       });
       return updated;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolType]);
 
   return (
@@ -258,10 +257,12 @@ export default function SettingsPage() {
                     placeholder="ضع رابط الصورة هنا"
                   />
                   {logoUrl && (
-                    <img
+                    <Image
                       src={logoUrl}
                       alt="شعار المدرسة"
-                      className={`w-12 h-12 object-contain rounded-l-lg border ${logoValid ? "border-gray-300 dark:border-gray-600" : "border-red-500"}`}
+                      width={48}
+                      height={48}
+                      className={`object-contain rounded-l-lg border ${logoValid ? "border-gray-300 dark:border-gray-600" : "border-red-500"}`}
                       onLoad={handleLogoLoad}
                       onError={handleLogoError}
                     />

@@ -134,6 +134,7 @@ export default function StudentRecord() {
         )
       );
     } catch (error) {
+      console.error("Error updating class: ", error);
       alert('حدث خطأ أثناء تحديث الصف');
     }
   };
@@ -161,6 +162,7 @@ export default function StudentRecord() {
         )
       );
     } catch (error) {
+      console.error("Error removing class: ", error);
       alert('حدث خطأ أثناء إزالة الصف');
     }
   };
@@ -186,6 +188,7 @@ export default function StudentRecord() {
         )
       );
     } catch (error) {
+      console.error("Error updating section: ", error);
       alert('حدث خطأ أثناء تحديث الشعبة');
     }
   };

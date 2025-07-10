@@ -3,7 +3,6 @@
 import { addDoc, collection, onSnapshot, query, orderBy, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { ReactNode, useEffect, useState } from 'react';
 import { db } from '../../../firebase/config';
-import { useRouter } from 'next/navigation';
 
 interface StudentData {
   id: string;
@@ -31,27 +30,18 @@ interface ClinicVisitRecord {
 export default function StudentClinic() {
   const [students, setStudents] = useState<StudentData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<'name' | 'clinicVisits'>('clinicVisits');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
+  const [searchQuery] = useState('');
+  const [sortField] = useState<'name' | 'clinicVisits'>('clinicVisits');
+  const [sortDirection] = useState<'asc' | 'desc'>('desc');
   const [clinicVisitData, setClinicVisitData] = useState<{ [studentId: string]: { date: string; notes: string } }>({});
   const [saving, setSaving] = useState<{ [studentId: string]: boolean }>({});
   const [error, setError] = useState<{ [studentId: string]: string | null }>({});
   const [clinicVisitsCount, setClinicVisitsCount] = useState<{ [studentId: string]: number }>({});
-  const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [studentClinicVisits, setStudentClinicVisits] = useState<ClinicVisitRecord[]>([]);
-  const [clinicVisitsLoading, setClinicVisitsLoading] = useState(false);
   const [deletingClinicVisitId, setDeletingClinicVisitId] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [clinicVisitsForDay, setClinicVisitsForDay] = useState<{ student: StudentData; clinicVisitId: string }[]>([]);
-  const [loadingClinicVisitsForDay, setLoadingClinicVisitsForDay] = useState(false);
   const [allClinicVisits, setAllClinicVisits] = useState<(ClinicVisitRecord & { student?: StudentData })[]>([]);
   const [showAddClinicVisit, setShowAddClinicVisit] = useState(false);
   const [schoolName, setSchoolName] = useState<string>(''); // اسم المدرسة
   const [managerName, setManagerName] = useState<string>(''); // اسم المدير
-  const router = useRouter();
 
   useEffect(() => {
     const q = query(collection(db, 'students'), orderBy('personalInfo.registrationNumber'));
@@ -136,24 +126,11 @@ export default function StudentClinic() {
           setManagerName(data.managerName || '');
         }
       } catch (e) {
-        // يمكن تجاهل الخطأ أو عرضه
+        console.error("Error fetching settings: ", e);
       }
     };
     fetchSettings();
   }, []);
-
-  const handleEdit = (studentId: string) => {
-    router.push(`/features/students/edit/${studentId}`);
-  };
-
-  const toggleSort = (field: 'name' | 'clinicVisits') => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc'); // الافتراضي للزيارات تنازلي
-    }
-  };
 
   // Only show active students (those without a leaveDate)
   const filteredStudents = students.filter(student => {
@@ -168,7 +145,6 @@ export default function StudentClinic() {
     return matchesSearch && !student.personalInfo.leaveDate;
   });
 
-  // ترتيب الطلاب حسب عدد الزيارات
   const sortedStudents = [...filteredStudents].sort((a, b) => {
     if (sortField === 'clinicVisits') {
       const countA = clinicVisitsCount[a.id] || 0;
@@ -195,35 +171,10 @@ export default function StudentClinic() {
       });
       setClinicVisitData((prev) => ({ ...prev, [studentId]: { date: '', notes: '' } }));
     } catch (e) {
+      console.error("Error adding clinic visit: ", e);
       setError((prev) => ({ ...prev, [studentId]: 'حدث خطأ أثناء الحفظ' }));
     } finally {
       setSaving((prev) => ({ ...prev, [studentId]: false }));
-    }
-  };
-
-  // جلب زيارات العيادة لطالب معين
-  const handleShowClinicVisits = async (student: StudentData) => {
-    setSelectedStudent(student);
-    setShowModal(true);
-    setClinicVisitsLoading(true);
-    try {
-      const visitsQuery = query(collection(db, 'clinicVisits'), where('studentId', '==', student.id));
-      const snapshot = await getDocs(visitsQuery);
-      const visits: ClinicVisitRecord[] = [];
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        visits.push({
-          id: docSnap.id,
-          date: data.date,
-          notes: data.notes,
-        });
-      });
-      visits.sort((a, b) => b.date.localeCompare(a.date));
-      setStudentClinicVisits(visits);
-    } catch (e) {
-      setStudentClinicVisits([]);
-    } finally {
-      setClinicVisitsLoading(false);
     }
   };
 
@@ -354,94 +305,16 @@ export default function StudentClinic() {
     }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedStudent(null);
-    setStudentClinicVisits([]);
-  };
-
   // حذف زيارة عيادة
   const handleDeleteClinicVisit = async (clinicVisitId: string) => {
     setDeletingClinicVisitId(clinicVisitId);
     try {
       await deleteDoc(doc(db, 'clinicVisits', clinicVisitId));
-      setStudentClinicVisits(prev => prev.filter(v => v.id !== clinicVisitId));
+      setAllClinicVisits(prev => prev.filter(v => v.id !== clinicVisitId));
     } catch (e) {
-      // يمكن إضافة إشعار بالخطأ إذا رغبت
+      console.error("Error deleting clinic visit: ", e);
     } finally {
       setDeletingClinicVisitId(null);
-    }
-  };
-
-  // جلب زيارات العيادة ليوم معين
-  const handleShowClinicVisitsForDay = async () => {
-    if (!selectedDate) return;
-    setLoadingClinicVisitsForDay(true);
-    try {
-      const visitsQuery = query(collection(db, 'clinicVisits'), where('date', '==', selectedDate));
-      const snapshot = await getDocs(visitsQuery);
-      const visitsList: { student: StudentData; clinicVisitId: string }[] = [];
-      snapshot.forEach(visitDoc => {
-        const data = visitDoc.data();
-        const student = students.find(s => s.id === data.studentId);
-        if (student) {
-          visitsList.push({ student, clinicVisitId: visitDoc.id });
-        }
-      });
-      setClinicVisitsForDay(visitsList);
-    } catch (e) {
-      setClinicVisitsForDay([]);
-    } finally {
-      setLoadingClinicVisitsForDay(false);
-    }
-  };
-
-  // طباعة جدول زيارات العيادة ليوم معين
-  const handlePrintClinicVisitsForDay = () => {
-    if (!selectedDate || clinicVisitsForDay.length === 0) return;
-    const printContent = `
-      <html dir="rtl">
-      <head>
-        <title>زيارات العيادة ليوم ${selectedDate}</title>
-        <style>
-          body { font-family: Tahoma, Arial, sans-serif; direction: rtl; color: #222; }
-          h2 { text-align: center; }
-          table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-          th, td { border: 1px solid #888; padding: 8px 12px; text-align: center; }
-          th { background: #f0f0f0; }
-        </style>
-      </head>
-      <body>
-        <h2>زيارات العيادة المدرسية ليوم ${selectedDate}</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>التسلسل</th>
-              <th>اسم الطالب</th>
-              <th>الصف والشعبة</th>
-              <th>رقم التسجيل</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${clinicVisitsForDay.map((item, idx) => `
-              <tr>
-                <td>${idx + 1}</td>
-                <td>${item.student.personalInfo.name} ${item.student.personalInfo.fatherName || ''}</td>
-                <td>${item.student.personalInfo.currentClass}${item.student.personalInfo.currentSection ? `(${item.student.personalInfo.currentSection})` : ''}</td>
-                <td>${item.student.personalInfo.registrationNumber}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `;
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => printWindow.print(), 500);
     }
   };
 
@@ -546,7 +419,7 @@ export default function StudentClinic() {
                   </tr>
                 </thead>
                 <tbody>
-                  {students
+                  {sortedStudents
                     .filter(student => !student.personalInfo.leaveDate)
                     .map(student => (
                       <tr key={student.id}>
@@ -590,4 +463,3 @@ export default function StudentClinic() {
     </div>
   );
 }
-

@@ -267,6 +267,7 @@ export default function StudentGrades() {
             setClassMismatch(false);
             alert('تم حذف الدرجات السابقة ويمكنك الآن إدخال الدرجات للصف الحالي.');
         } catch (error) {
+            console.error("Error deleting grades: ", error);
             alert('حدث خطأ أثناء حذف الدرجات.');
         }
     };

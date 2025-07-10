@@ -235,7 +235,7 @@ export default function StudentGrades() {
                     setManagerName(data.managerName || '');
                 }
             } catch (e) {
-                // يمكن تجاهل الخطأ أو عرضه
+                console.error("Error fetching settings: ", e);
             }
         };
         fetchSettings();
@@ -295,6 +295,7 @@ export default function StudentGrades() {
             setClassMismatch(false);
             alert('تم حذف الدرجات السابقة ويمكنك الآن إدخال الدرجات للصف الحالي.');
         } catch (error) {
+            console.error("Error deleting grades: ", error);
             alert('حدث خطأ أثناء حذف الدرجات.');
         }
     };
@@ -615,4 +616,3 @@ export default function StudentGrades() {
         </div>
     );
 }
-

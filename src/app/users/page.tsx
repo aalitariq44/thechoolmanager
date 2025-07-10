@@ -30,9 +30,9 @@ const UsersPage = () => {
         const deleteUserCallable = httpsCallable(functions, 'deleteUser');
         await deleteUserCallable({ uid });
         fetchUsers(); // Refresh the list
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error deleting user:', error);
-        setError(error.message || 'فشل حذف المستخدم.');
+        setError((error as Error).message || 'فشل حذف المستخدم.');
       }
     }
   };
@@ -93,9 +93,9 @@ const UsersPage = () => {
       setRole('');
       setIsModalOpen(false);
       fetchUsers(); // Refresh the list
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error adding user: ", error);
-      setError(error.message);
+      setError((error as Error).message);
     }
   };
 

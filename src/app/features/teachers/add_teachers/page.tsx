@@ -71,17 +71,17 @@ export default function TeachersRegistry() {
     setTeacherData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleTrainingCourseChange = (index: number, field: keyof TeacherData['trainingCourses'][0], value: string) => {
-    setTeacherData(prev => {
-      const newCourses = [...prev.trainingCourses]
-      newCourses[index] = { ...newCourses[index], [field]: value }
-  const handleTrainingCourseChange = (index: number, field: keyof TeacherData['trainingCourses'][0], value: string) => {
+  const handleTrainingCourseChange = (index: number, field: keyof NonNullable<TeacherData['trainingCourses']>[number], value: string) => {
     setTeacherData(prev => {
       const newCourses = [...(prev.trainingCourses ?? [])]
       newCourses[index] = { ...newCourses[index], [field]: value }
       return { ...prev, trainingCourses: newCourses }
     })
   }
+
+  const handleAppreciationLetterChange = (index: number, field: keyof NonNullable<TeacherData['appreciationLetters']>[number], value: string) => {
+    setTeacherData(prev => {
+      const newLetters = [...(prev.appreciationLetters ?? [])]
       newLetters[index] = { ...newLetters[index], [field]: value }
       return { ...prev, appreciationLetters: newLetters }
     })

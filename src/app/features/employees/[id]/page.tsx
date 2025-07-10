@@ -3,7 +3,32 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
-import Image from 'next/image'
+
+interface Employee {
+  fullName: string;
+  motherName: string;
+  birthDate: string;
+  birthPlace: string;
+  address: string;
+  education: string;
+  jobTitle: string;
+  nationalId: string;
+  idIssueDate: string;
+  idIssuePlace: string;
+  rationCardNo: string;
+  rationCenter: string;
+  firstAppointmentDate: string;
+  jobStartDate: string;
+  adminOrderNo: string;
+  adminOrderDate: string;
+  maritalStatus: string;
+  spouseName: string;
+  childrenCount: string;
+  photo: string;
+  spouseEmployment: string;
+  transferDate: string;
+  phoneNumber: string;
+}
 
 export default function EmployeeViewEdit() {
   const params = useParams()
@@ -11,8 +36,8 @@ export default function EmployeeViewEdit() {
   const id = params?.id as string
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [employee, setEmployee] = useState<any>(null)
-  const [formData, setFormData] = useState<any>({
+  const [employee, setEmployee] = useState<Employee | null>(null)
+  const [formData, setFormData] = useState<Employee>({
     fullName: '',
     motherName: '',
     birthDate: '',
@@ -46,7 +71,7 @@ export default function EmployeeViewEdit() {
       const docRef = doc(db, 'employees', id)
       const docSnap = await getDoc(docRef)
       if (docSnap.exists()) {
-        setEmployee(docSnap.data())
+        setEmployee(docSnap.data() as Employee)
         setFormData({
           ...formData,
           ...docSnap.data()
@@ -69,10 +94,11 @@ export default function EmployeeViewEdit() {
     e.preventDefault()
     setSaving(true)
     try {
-      await updateDoc(doc(db, 'employees', id), formData)
+      await updateDoc(doc(db, 'employees', id), { ...formData })
       alert('تم حفظ التعديلات بنجاح')
       router.push('/features/employees')
     } catch (error) {
+      console.error("Error updating document: ", error);
       alert('حدث خطأ أثناء الحفظ')
     } finally {
       setSaving(false)

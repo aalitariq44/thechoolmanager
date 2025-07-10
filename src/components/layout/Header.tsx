@@ -1,11 +1,9 @@
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { db } from '../../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 
 export default function Header() {
-  const router = useRouter();
-
   // جلب بيانات المدرسة من فايربيس
   const [school, setSchool] = useState<{
     schoolName: string;
@@ -13,10 +11,12 @@ export default function Header() {
     logoUrl: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const fetchSchool = async () => {
       setLoading(true);
+      setLogoError(false); 
       try {
         const q = collection(db, "settings");
         const snapshot = await getDocs(q);
@@ -47,11 +47,14 @@ export default function Header() {
         <div className="flex items-center space-x-4 space-x-reverse">
           <div className="relative w-10 h-10 flex items-center justify-center text-blue-600">
             {/* شعار المدرسة من فايربيس أو الأيقونة الافتراضية */}
-            {school?.logoUrl ? (
-              <img
+            {school?.logoUrl && !logoError ? (
+              <Image
                 src={school.logoUrl}
                 alt="شعار المدرسة"
-                className="w-10 h-10 object-contain rounded"
+                width={40}
+                height={40}
+                className="object-contain rounded"
+                onError={() => setLogoError(true)}
               />
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">

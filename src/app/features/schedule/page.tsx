@@ -3,17 +3,7 @@
 import { addDoc, collection, onSnapshot, query, orderBy, updateDoc, doc, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { JSX, useEffect, useState } from 'react';
 import { db } from '../../../firebase/config';
-
-interface Schedule {
-  id: string;
-  name: string;
-  dailyLessons: number;
-  workingDays: string[];
-  classes: string[];
-  schedules: { [className: string]: { [key: string]: string[] } };
-  createdAt: Date;
-  isCurrent?: boolean; // جدول حالي
-}
+import { Schedule } from '../../../types/schedule';
 
 interface NewScheduleForm {
   name: string;
@@ -75,15 +65,9 @@ const SECTION_LETTERS = [
   'أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'
 ];
 
-export default function SchoolScheduleApp({
-  initialSchedule,
-  onBack
-}: {
-  initialSchedule?: Schedule | null,
-  onBack?: () => void
-}): JSX.Element {
+export default function SchoolScheduleApp(): JSX.Element {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(initialSchedule || null);
+  const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
   const [currentClass, setCurrentClass] = useState<string>('');
   const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -106,13 +90,6 @@ export default function SchoolScheduleApp({
 
   // تحميل جميع الجداول عند بدء التطبيق
   useEffect(() => {
-    if (initialSchedule) {
-      setCurrentSchedule(initialSchedule);
-      setCurrentClass(initialSchedule.classes?.[0] || '');
-      setIsInitialLoading(false); // إذا كان هناك جدول مبدئي، لا يوجد تحميل أولي
-      return;
-    }
-
     setIsInitialLoading(true); // ابدأ التحميل الأولي
     const q = query(collection(db, 'schedules'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -123,7 +100,7 @@ export default function SchoolScheduleApp({
         workingDays: doc.data().workingDays,
         classes: doc.data().classes || [],
         schedules: doc.data().schedules || {},
-        createdAt: doc.data().createdAt,
+        createdAt: doc.data().createdAt.toDate().toISOString(), // Convert to ISO string
         isCurrent: doc.data().isCurrent || false
       }));
       setSchedules(schedulesData);
@@ -134,7 +111,7 @@ export default function SchoolScheduleApp({
     });
 
     return () => unsubscribe();
-  }, [initialSchedule]);
+  }, []);
 
   // إنشاء جدول جديد
   const createSchedule = async (): Promise<void> => {
@@ -176,7 +153,7 @@ export default function SchoolScheduleApp({
         workingDays: newSchedule.workingDays,
         classes: classesWithSections,
         schedules: emptySchedules,
-        createdAt: new Date()
+        createdAt: new Date().toISOString() // Convert to ISO string
       });
 
       setNewSchedule({ name: '', dailyLessons: 6, workingDays: [], classes: [], classSections: {} });
@@ -352,12 +329,8 @@ export default function SchoolScheduleApp({
 
   // العودة للقائمة الرئيسية
   const goBackToHome = (): void => {
-    if (onBack) {
-      onBack();
-    } else {
-      setCurrentSchedule(null);
-      setCurrentClass('');
-    }
+    setCurrentSchedule(null);
+    setCurrentClass('');
   };
 
   // --- دوال الطباعة ---
@@ -718,9 +691,9 @@ export default function SchoolScheduleApp({
 
 
           {!isInitialLoading && schedules.length === 0 && ( // جديد: عرض رسالة عدم وجود جداول فقط إذا لم يكن هناك تحميل وعدد الجداول صفر
-            <div className="text-center py-12">
-              <p className="text-slate-500 dark:text-slate-400 text-lg">لا توجد جداول مدرسية حتى الآن</p>
-              <p className="text-slate-400 dark:text-slate-500">انقر على "إنشاء جدول جديد" لبدء إنشاء أول جدول</p>
+            <div className='text-center py-12'>
+              <p className='text-slate-500 dark:text-slate-400 text-lg'>لا توجد جداول مدرسية حتى الآن</p>
+              <p className='text-slate-400 dark:text-slate-500'>{'انقر على "إنشاء جدول جديد" لبدء إنشاء أول جدول'}</p>
             </div>
           )}
         </div>

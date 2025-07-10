@@ -3,7 +3,6 @@
 import { addDoc, collection, onSnapshot, query, orderBy, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { ReactNode, useEffect, useState } from 'react';
 import { db } from '../../../firebase/config';
-import { useRouter } from 'next/navigation';
 
 interface StudentData {
   id: string;
@@ -45,7 +44,6 @@ export default function StudentRecord() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [absencesForDay, setAbsencesForDay] = useState<{ student: StudentData; absenceId: string }[]>([]);
   const [loadingAbsencesForDay, setLoadingAbsencesForDay] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const q = query(collection(db, 'students'), orderBy('personalInfo.registrationNumber'));
@@ -79,10 +77,6 @@ export default function StudentRecord() {
     });
     return () => unsubscribe();
   }, []);
-
-  const handleEdit = (studentId: string) => {
-    router.push(`/features/students/edit/${studentId}`);
-  };
 
   const toggleSort = (field: 'name' | 'absences') => {
     if (sortField === field) {
@@ -136,6 +130,7 @@ export default function StudentRecord() {
       });
       setAbsenceDates((prev) => ({ ...prev, [studentId]: '' }));
     } catch (e) {
+      console.error("Error adding absence: ", e);
       setError((prev) => ({ ...prev, [studentId]: 'حدث خطأ أثناء الحفظ' }));
     } finally {
       setSaving((prev) => ({ ...prev, [studentId]: false }));
@@ -159,6 +154,7 @@ export default function StudentRecord() {
       absences.sort((a, b) => b.date.localeCompare(a.date));
       setStudentAbsences(absences);
     } catch (e) {
+      console.error("Error fetching student absences: ", e);
       setStudentAbsences([]);
     } finally {
       setAbsencesLoading(false);
@@ -178,7 +174,7 @@ export default function StudentRecord() {
       await deleteDoc(doc(db, 'absences', absenceId));
       setStudentAbsences(prev => prev.filter(abs => abs.id !== absenceId));
     } catch (e) {
-      // يمكن إضافة إشعار بالخطأ إذا رغبت
+      console.error("Error deleting absence: ", e);
     } finally {
       setDeletingAbsenceId(null);
     }
@@ -201,6 +197,7 @@ export default function StudentRecord() {
       });
       setAbsencesForDay(absencesList);
     } catch (e) {
+      console.error("Error fetching absences for day: ", e);
       setAbsencesForDay([]);
     } finally {
       setLoadingAbsencesForDay(false);

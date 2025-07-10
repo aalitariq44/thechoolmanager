@@ -3,7 +3,6 @@
 import { addDoc, collection, onSnapshot, query, orderBy, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { ReactNode, useEffect, useState } from 'react';
 import { db } from '../../../firebase/config';
-import { useRouter } from 'next/navigation';
 
 interface StudentData {
   id: string;
@@ -36,7 +35,6 @@ export default function StudentVacation() {
   const [sortField, setSortField] = useState<'name' | 'vacations'>('vacations');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
-  // تعديل vacationDates ليحمل من وإلى
   const [vacationDates, setVacationDates] = useState<{ [studentId: string]: { from: string; to: string } }>({});
   const [saving, setSaving] = useState<{ [studentId: string]: boolean }>({});
   const [error, setError] = useState<{ [studentId: string]: string | null }>({});
@@ -49,9 +47,7 @@ export default function StudentVacation() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [vacationsForDay, setVacationsForDay] = useState<{ student: StudentData; vacationId: string }[]>([]);
   const [loadingVacationsForDay, setLoadingVacationsForDay] = useState(false);
-  const router = useRouter();
   const [vacationReasons, setVacationReasons] = useState<{ [studentId: string]: string }>({});
-  // إضافة نوع الإجازة لكل طالب (single/multiple)
   const [vacationType, setVacationType] = useState<{ [studentId: string]: 'single' | 'multiple' }>({});
 
   useEffect(() => {
@@ -86,10 +82,6 @@ export default function StudentVacation() {
     });
     return () => unsubscribe();
   }, []);
-
-  const handleEdit = (studentId: string) => {
-    router.push(`/features/students/edit/${studentId}`);
-  };
 
   const toggleSort = (field: 'name' | 'vacations') => {
     if (sortField === field) {
@@ -187,7 +179,7 @@ export default function StudentVacation() {
       setVacationDates((prev) => ({ ...prev, [studentId]: { from: '', to: '' } }));
       setVacationReasons((prev) => ({ ...prev, [studentId]: '' }));
       setVacationType((prev) => ({ ...prev, [studentId]: 'single' }));
-    } catch (e) {
+    } catch {
       setError((prev) => ({ ...prev, [studentId]: 'حدث خطأ أثناء الحفظ' }));
     } finally {
       setSaving((prev) => ({ ...prev, [studentId]: false }));
@@ -220,7 +212,7 @@ export default function StudentVacation() {
         return bDate.localeCompare(aDate);
       });
       setStudentVacations(vacations);
-    } catch (e) {
+    } catch {
       setStudentVacations([]);
     } finally {
       setVacationsLoading(false);
@@ -280,7 +272,7 @@ export default function StudentVacation() {
     try {
       await deleteDoc(doc(db, 'vacations', vacationId));
       setStudentVacations(prev => prev.filter(vac => vac.id !== vacationId));
-    } catch (e) {
+    } catch {
       // يمكن إضافة إشعار بالخطأ إذا رغبت
     } finally {
       setDeletingVacationId(null);
@@ -303,7 +295,7 @@ export default function StudentVacation() {
         }
       });
       setVacationsForDay(vacationsList);
-    } catch (e) {
+    } catch {
       setVacationsForDay([]);
     } finally {
       setLoadingVacationsForDay(false);
@@ -784,4 +776,3 @@ export default function StudentVacation() {
     </div>
   );
 }
-

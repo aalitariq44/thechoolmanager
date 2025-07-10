@@ -52,24 +52,6 @@ export default function StudentRecord() {
     'ملاحظات عن النتائج'
   ];
 
-  const grades = [
-    'الأول الابتدائي',
-    'الثاني الابتدائي',
-    'الثالث الابتدائي',
-    'الرابع الابتدائي',
-    'الخامس الابتدائي',
-    'السادس الابتدائي',
-    'الأول المتوسط',
-    'الثاني المتوسط',
-    'الثالث المتوسط',
-    'الرابع العلمي',
-    'الخامس العلمي',
-    'السادس العلمي',
-    'الرابع الأدبي',
-    'الخامس الأدبي',
-    'السادس الأدبي'
-  ];
-
   const allGrades = [
     'الأول الابتدائي',
     'الثاني الابتدائي',
@@ -91,7 +73,6 @@ export default function StudentRecord() {
   const sectionLetters = ['أ', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ي'];
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 101 }, (_, i) => (currentYear - 50 + i).toString());
 
   const initialStudentData: StudentData = {
     registrationNumber: '',
@@ -114,7 +95,7 @@ export default function StudentRecord() {
   };
 
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(initialSubjects.slice(0, -1));
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings] = useState(false);
   const [studentData, setStudentData] = useState<StudentData>(initialStudentData);
   const [gradeColumns, setGradeColumns] = useState<GradeColumn[]>([
     {
@@ -125,65 +106,6 @@ export default function StudentRecord() {
     },
   ]);
   const router = useRouter();
-
-  const addGradeColumn = () => {
-    const lastColumn = gradeColumns[gradeColumns.length - 1];
-    const lastGradeIndex = grades.indexOf(lastColumn.grade);
-    const nextGrade = lastGradeIndex < grades.length - 1 ? grades[lastGradeIndex + 1] : grades[0];
-    const [lastYear] = lastColumn.year.split(' - ').map(Number);
-    
-    const newColumn: GradeColumn = {
-      id: (gradeColumns.length + 1).toString(),
-      grade: nextGrade,
-      grades: Object.fromEntries(selectedSubjects.map(subject => [subject, ''])),
-      year: `${lastYear + 1} - ${lastYear + 2}`
-    };
-    setGradeColumns([...gradeColumns, newColumn]);
-  };
-
-  const removeGradeColumn = (columnId: string) => {
-    setGradeColumns(gradeColumns.filter(column => column.id !== columnId));
-  };
-
-  const handleGradeChange = (columnId: string, subject: string, value: string) => {
-    setGradeColumns(prev => prev.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          grades: {
-            ...column.grades,
-            [subject]: value
-          }
-        };
-      }
-      return column;
-    }));
-  };
-
-  const handleGradeSelection = (columnId: string, grade: string) => {
-    setGradeColumns(prev => prev.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          grade
-        };
-      }
-      return column;
-    }));
-  };
-
-  const handleYearChange = (columnId: string, startYear: string) => {
-    const endYear = (parseInt(startYear) + 1).toString();
-    setGradeColumns(prev => prev.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          year: `${startYear} - ${endYear}`
-        };
-      }
-      return column;
-    }));
-  };
 
   const handleSubjectSelection = (subject: string) => {
     setSelectedSubjects(prev => 

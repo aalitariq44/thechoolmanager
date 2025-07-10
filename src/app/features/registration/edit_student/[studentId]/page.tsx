@@ -1,7 +1,7 @@
 "use client";
 
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { db } from '../../../../../firebase/config';
 import jsPDF from 'jspdf';
@@ -86,7 +86,6 @@ export default function EditStudentRecord() {
       ? params['studentId'][0]
       : params['studentId']
     : undefined;
-  const router = useRouter();
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [gradeColumns, setGradeColumns] = useState<GradeColumn[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(initialSubjects.slice(0, -1));
@@ -263,7 +262,6 @@ export default function EditStudentRecord() {
       format: 'a4'
     });
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
     // احسب أبعاد الصورة لتناسب الصفحة
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pageWidth - 20;

@@ -141,7 +141,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
           setSchoolName(data.schoolName || '');
           setManagerName(data.managerName || '');
         }
-      } catch (e) {
+      } catch {
         // يمكن تجاهل الخطأ أو عرضه
       }
     };
@@ -172,7 +172,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
             setSchoolClasses([]);
             setSchoolSections([]);
           }
-        } catch (e) {
+        } catch {
           setSchoolClasses([]);
           setSchoolSections([]);
         }
@@ -196,7 +196,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
             setSchoolSections([]);
           }
         }
-      } catch (e) {
+      } catch {
         setSchoolSections([]);
       }
     };

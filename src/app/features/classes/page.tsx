@@ -23,7 +23,7 @@ export default function ClassesPage() {
           setSections(data.sections || {});
         }
       } catch (e) {
-        // يمكن إضافة معالجة الخطأ هنا
+        console.error("Error fetching settings: ", e);
       } finally {
         setLoading(false);
       }

@@ -1,21 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   collection,
   query,
   onSnapshot,
-  deleteDoc,
   doc,
-  addDoc,
   updateDoc,
   orderBy,
   getDocs,
   setDoc,
-  arrayUnion,
-  arrayRemove,
-  increment,
-  getDoc
+  arrayUnion
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import jsPDF from 'jspdf';
@@ -56,7 +52,7 @@ export default function AdmissionPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
-  const [batches, setBatches] = useState<AdmissionBatch[]>([]);
+  // const [batches, setBatches] = useState<AdmissionBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [studentPreview, setStudentPreview] = useState<Student | null>(null);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
@@ -144,7 +140,7 @@ export default function AdmissionPage() {
           }
         }
       } catch (e) {
-        // يمكن تجاهل الخطأ أو عرضه
+        console.error("Error fetching school settings: ", e);
       }
     };
     fetchSchoolSettings();
@@ -172,7 +168,7 @@ export default function AdmissionPage() {
         // ترتيب القبولات تنازلياً حسب createdAt (معالجة undefined)
         allStudents.sort((a, b) => ((b.createdAt || '')).localeCompare(a.createdAt || ''));
         setStudents(allStudents);
-        setBatches(batchList);
+        // setBatches(batchList);
         setLoading(false);
       },
       (error) => {
@@ -656,11 +652,12 @@ export default function AdmissionPage() {
             </div>
 
             <div className="overflow-auto border rounded shadow max-h-[70vh] bg-gray-100 dark:bg-gray-800">
-              <img
+              <Image
                 src={previewImg}
                 alt="معاينة PDF"
+                width={794}
+                height={1123}
                 className="max-w-full h-auto"
-                style={{ width: '794px', height: '1123px' }}
               />
             </div>
 
@@ -725,10 +722,12 @@ export default function AdmissionPage() {
               </div>
               <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                 {logoDataUrl ? (
-                  <img
+                  <Image
                     src={logoDataUrl}
                     alt="شعار المدرسة"
-                    style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '50%', background: '#fff', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+                    width={80}
+                    height={80}
+                    style={{ objectFit: 'contain', borderRadius: '50%', background: '#fff', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
                   />
                 ) : (
                   <div style={{ width: '80px', height: '80px', background: '#eee', borderRadius: '50%' }} />
