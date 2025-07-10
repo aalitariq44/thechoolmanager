@@ -138,6 +138,15 @@ function Sidebar(): JSX.Element {
             </svg>
             <span className="text-gray-700 dark:text-gray-300">الموظفين</span>
           </div>
+
+          <div onClick={() => router.push('/features/halls')} className="mb-1 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer flex items-center gap-2">
+            {/* classes icon */}
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="6" rx="2" />
+              <rect x="3" y="14" width="18" height="6" rx="2" />
+            </svg>
+            <span className="text-gray-700 dark:text-gray-300">القاعات</span>
+          </div>
         </div>
 
         {/* الدراسة والجدول */}
