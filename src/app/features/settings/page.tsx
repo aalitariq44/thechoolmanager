@@ -11,9 +11,46 @@ const schoolTypes = [
   "اعدادية"
 ];
 
+const arabicSections = [
+  "أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي", "ك", "ل", "م", "ن", "س", "ع", "ف", "ص", "ق", "ر", "ش", "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"
+];
+
+const gradeOptionsMap: { [type: string]: string[] } = {
+  "ابتدائية": [
+    'الأول الابتدائي',
+    'الثاني الابتدائي',
+    'الثالث الابتدائي',
+    'الرابع الابتدائي',
+    'الخامس الابتدائي',
+    'السادس الابتدائي'
+  ],
+  "متوسطة": [
+    'الأول المتوسط',
+    'الثاني المتوسط',
+    'الثالث المتوسط'
+  ],
+  "اعدادية": [
+    'الرابع العلمي',
+    'الخامس العلمي',
+    'السادس العلمي',
+    'الرابع الأدبي',
+    'الخامس الأدبي',
+    'السادس الأدبي'
+  ]
+};
+
+const getGradeOptions = (types: string[]) => {
+  // دمج الصفوف بدون تكرار حسب الأنواع المختارة
+  const set = new Set<string>();
+  types.forEach(type => {
+    gradeOptionsMap[type]?.forEach(grade => set.add(grade));
+  });
+  return Array.from(set);
+};
+
 export default function SettingsPage() {
   const [schoolName, setSchoolName] = useState("");
-  const [schoolType, setSchoolType] = useState(schoolTypes[0]);
+  const [schoolType, setSchoolType] = useState<string[]>([schoolTypes[0]]);
   const [logoUrl, setLogoUrl] = useState("");
   const [logoValid, setLogoValid] = useState(false);
   const [address, setAddress] = useState("");
@@ -24,6 +61,8 @@ export default function SettingsPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [documentId, setDocumentId] = useState<string | null>(null);
+  const [grades, setGrades] = useState<string[]>([]);
+  const [sections, setSections] = useState<{ [grade: string]: number }>({});
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLogoUrl(e.target.value);
@@ -32,18 +71,55 @@ export default function SettingsPage() {
   const handleLogoLoad = () => setLogoValid(true);
   const handleLogoError = () => setLogoValid(false);
 
+  const handleGradeChange = (grade: string) => {
+    setGrades(prev =>
+      prev.includes(grade)
+        ? prev.filter(g => g !== grade)
+        : [...prev, grade]
+    );
+    setSections(prev => {
+      const updated = { ...prev };
+      if (grades.includes(grade)) {
+        delete updated[grade];
+      } else {
+        updated[grade] = 1;
+      }
+      return updated;
+    });
+  };
+
+  const handleSectionCountChange = (grade: string, count: number) => {
+    setSections(prev => ({
+      ...prev,
+      [grade]: count
+    }));
+  };
+
+  const getSectionsArray = (count: number) => {
+    return arabicSections.slice(0, Math.max(0, count));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaveSuccess(false);
     setSaveError(null);
     try {
+      // بناء كائن الشعب
+      const sectionsData: { [grade: string]: string[] } = {};
+      grades.forEach(grade => {
+        const count = sections[grade] || 1;
+        sectionsData[grade] = getSectionsArray(count);
+      });
+
       const settingsData = {
         schoolName,
-        schoolType,
+        schoolType, // الآن مصفوفة
         logoUrl,
         address,
         managerName,
         phone,
+        grades,
+        sections: sectionsData,
         updatedAt: new Date()
       };
 
@@ -77,11 +153,19 @@ export default function SettingsPage() {
           const data = doc.data();
           setDocumentId(doc.id);
           setSchoolName(data.schoolName || "");
-          setSchoolType(data.schoolType || schoolTypes[0]);
+          setSchoolType(Array.isArray(data.schoolType) ? data.schoolType : [data.schoolType || schoolTypes[0]]);
           setLogoUrl(data.logoUrl || "");
           setAddress(data.address || "");
           setManagerName(data.managerName || "");
           setPhone(data.phone || "");
+          setGrades(data.grades || []);
+          setSections(
+            data.sections
+              ? Object.fromEntries(
+                  Object.entries(data.sections).map(([grade, arr]) => [grade, Array.isArray(arr) ? arr.length : 1])
+                )
+              : {}
+          );
         }
       } catch (e) {
         // يمكن تجاهل الخطأ أو عرضه
@@ -92,6 +176,29 @@ export default function SettingsPage() {
     fetchSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // تحديث اختيار نوع المدرسة (checkbox متعدد)
+  const handleSchoolTypeChange = (type: string) => {
+    setSchoolType(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  // عند تغيير الأنواع، نعيد تصفية الصفوف المختارة
+  useEffect(() => {
+    const allowedGrades = getGradeOptions(schoolType);
+    setGrades(prev => prev.filter(g => allowedGrades.includes(g)));
+    setSections(prev => {
+      const updated: typeof prev = {};
+      Object.keys(prev).forEach(grade => {
+        if (allowedGrades.includes(grade)) updated[grade] = prev[grade];
+      });
+      return updated;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schoolType]);
 
   return (
     <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen" dir="rtl">
@@ -126,15 +233,19 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">نوع المدرسة</label>
-                <select
-                  value={schoolType}
-                  onChange={e => setSchoolType(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
-                >
+                <div className="flex flex-wrap gap-4">
                   {schoolTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
+                    <label key={type} className="flex items-center space-x-2 space-x-reverse">
+                      <input
+                        type="checkbox"
+                        checked={schoolType.includes(type)}
+                        onChange={() => handleSchoolTypeChange(type)}
+                        className="form-checkbox h-4 w-4 text-blue-600"
+                      />
+                      <span className="text-gray-900 dark:text-gray-100">{type}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">شعار المدرسة (رابط صورة)</label>
@@ -191,6 +302,40 @@ export default function SettingsPage() {
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="رقم الهاتف"
                 />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">
+                  الصفوف الموجودة في المدرسة
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {getGradeOptions(schoolType).map(grade => (
+                    <div key={grade} className="flex items-center space-x-2 space-x-reverse">
+                      <input
+                        type="checkbox"
+                        checked={grades.includes(grade)}
+                        onChange={() => handleGradeChange(grade)}
+                        className="form-checkbox h-4 w-4 text-blue-600"
+                      />
+                      <span className="min-w-[120px] text-gray-900 dark:text-gray-100">{grade}</span>
+                      {grades.includes(grade) && (
+                        <input
+                          type="number"
+                          min={1}
+                          max={arabicSections.length}
+                          value={sections[grade] || 1}
+                          onChange={e => handleSectionCountChange(grade, Math.max(1, Math.min(arabicSections.length, Number(e.target.value))))}
+                          className="w-20 p-1 border border-gray-300 rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-center"
+                          placeholder="عدد الشعب"
+                        />
+                      )}
+                      {grades.includes(grade) && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          الشعب: {getSectionsArray(sections[grade] || 1).join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="flex justify-start pt-4 space-x-4 space-x-reverse">
                 <button
