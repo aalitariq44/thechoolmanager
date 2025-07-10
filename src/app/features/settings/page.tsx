@@ -94,196 +94,125 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div
-      style={{
-        width: "100%",
-        padding: "20px",
-      }}
-    >
-      <h1 style={{ 
-        fontSize: "2rem", 
-        fontWeight: "bold", 
-        marginBottom: "2rem",
-        textAlign: "center",
-        color: "#000"  // إضافة لون أسود
-      }}>
-        الإعدادات
-      </h1>
-
-      {loading ? (
-        <div style={{ textAlign: "center", padding: 30 }}>جاري تحميل البيانات...</div>
-      ) : (
-      <section style={{
-        width: "100%",
-        padding: "20px",
-        borderRadius: "8px",
-        border: "1px solid var(--settings-border)"
-      }}>
-        <h2 style={{ 
-          fontSize: "1.5rem", 
-          fontWeight: "600",
-          marginBottom: "1.5rem",
-          color: "#000"  // إضافة لون أسود
-        }}>
-          معلومات المدرسة
-        </h2>
-        <div style={{ marginBottom: 12 }}>
-          <label className="settings-label">اسم المدرسة:</label>
-          <input
-            type="text"
-            value={schoolName}
-            onChange={e => setSchoolName(e.target.value)}
-            className="settings-input"
-          />
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen" dir="rtl">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 text-center w-full">
+            الإعدادات
+          </h1>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label className="settings-label">نوع المدرسة:</label>
-          <select
-            value={schoolType}
-            onChange={e => setSchoolType(e.target.value)}
-            className="settings-select"
-          >
-            {schoolTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginBottom: 12, display: "flex", alignItems: "center" }}>
-          <label className="settings-label" style={{ flexShrink: 0 }}>شعار المدرسة (رابط صورة):</label>
-          <input
-            type="text"
-            value={logoUrl}
-            onChange={handleLogoChange}
-            className="settings-input"
-            style={{ flex: 1, marginLeft: 8 }}
-            placeholder="ضع رابط الصورة هنا"
-          />
-          {logoUrl && (
-            <img
-              src={logoUrl}
-              alt="شعار المدرسة"
-              className={`settings-logo-img${logoValid ? "" : " invalid"}`}
-              onLoad={handleLogoLoad}
-              onError={handleLogoError}
-            />
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+          <h2 className="text-xl font-semibold p-5 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+            معلومات المدرسة
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center py-10">
+              <svg className="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+            </div>
+          ) : (
+            <form className="space-y-5 p-8">
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">اسم المدرسة</label>
+                <input
+                  type="text"
+                  value={schoolName}
+                  onChange={e => setSchoolName(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="اسم المدرسة"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">نوع المدرسة</label>
+                <select
+                  value={schoolType}
+                  onChange={e => setSchoolType(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {schoolTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">شعار المدرسة (رابط صورة)</label>
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    value={logoUrl}
+                    onChange={handleLogoChange}
+                    className="w-full p-3 border border-gray-300 rounded-r-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="ضع رابط الصورة هنا"
+                  />
+                  {logoUrl && (
+                    <img
+                      src={logoUrl}
+                      alt="شعار المدرسة"
+                      className={`w-12 h-12 object-contain rounded-l-lg border ${logoValid ? "border-gray-300 dark:border-gray-600" : "border-red-500"}`}
+                      onLoad={handleLogoLoad}
+                      onError={handleLogoError}
+                    />
+                  )}
+                </div>
+                {logoUrl && !logoValid && (
+                  <div className="text-red-500 mt-2 text-sm text-right">
+                    تعذر تحميل صورة الشعار. يرجى التأكد من صحة الرابط.
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">عنوان المدرسة</label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="عنوان المدرسة"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">اسم مدير المدرسة</label>
+                <input
+                  type="text"
+                  value={managerName}
+                  onChange={e => setManagerName(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="اسم المدير"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">رقم هاتف المدرسة</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="رقم الهاتف"
+                />
+              </div>
+              <div className="flex justify-start pt-4 space-x-4 space-x-reverse">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="py-2 px-5 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+                >
+                  {saving ? "جارٍ الحفظ..." : "حفظ"}
+                </button>
+                {/* يمكن إضافة زر إلغاء إذا رغبت */}
+              </div>
+              {saveSuccess && (
+                <div className="text-green-600 mt-4 text-center">تم الحفظ بنجاح</div>
+              )}
+              {saveError && (
+                <div className="text-red-500 mt-4 text-center">{saveError}</div>
+              )}
+            </form>
           )}
         </div>
-        {/* رسالة خطأ عند فشل تحميل الشعار */}
-        {logoUrl && !logoValid && (
-          <div style={{ color: "red", marginBottom: 12, marginRight: 4, fontSize: "0.95rem" }}>
-            تعذر تحميل صورة الشعار. يرجى التأكد من صحة الرابط.
-          </div>
-        )}
-        <div style={{ marginBottom: 12 }}>
-          <label className="settings-label">عنوان المدرسة:</label>
-          <input
-            type="text"
-            value={address}
-            onChange={e => setAddress(e.target.value)}
-            className="settings-input"
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label className="settings-label">اسم مدير المدرسة:</label>
-          <input
-            type="text"
-            value={managerName}
-            onChange={e => setManagerName(e.target.value)}
-            className="settings-input"
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label className="settings-label">رقم هاتف المدرسة:</label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
-            className="settings-input"
-          />
-        </div>
-        {/* زر الحفظ والتنبيهات */}
-        <div style={{ marginTop: 20 }}>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              padding: "10px 24px",
-              borderRadius: 6,
-              border: "none",
-              background: "#1976d2",
-              color: "#fff",
-              fontWeight: 600,
-              fontSize: "1rem",
-              cursor: saving ? "not-allowed" : "pointer"
-            }}
-          >
-            {saving ? "جارٍ الحفظ..." : "حفظ"}
-          </button>
-          {saveSuccess && (
-            <span style={{ color: "green", marginRight: 12 }}>تم الحفظ بنجاح</span>
-          )}
-          {saveError && (
-            <span style={{ color: "red", marginRight: 12 }}>{saveError}</span>
-          )}
-        </div>
-      </section>
-      )}
-
-      <style>
-        {`
-          :root {
-            --settings-text: #000;
-            --settings-border: #ccc;
-            --settings-input-text: #000;
-            --settings-label: #000;
-            --settings-input-border: #bbb;
-            --settings-input-focus: #1976d2;
-          }
-          @media (prefers-color-scheme: dark) {
-            :root {
-              --settings-text: #000;
-              --settings-border: #333;
-              --settings-input-text: #000;
-              --settings-label: #000;
-              --settings-input-border: #444;
-              --settings-input-focus: #90caf9;
-            }
-          }
-          .settings-label {
-            color: #000;
-            font-weight: 500;
-            margin-bottom: 4px;
-            display: block;
-            font-size: 1rem;
-          }
-          .settings-input, .settings-select {
-            width: 100%;
-            color: #000;
-            border: 1px solid var(--settings-input-border);
-            border-radius: 5px;
-            padding: 7px 10px;
-            font-size: 1rem;
-            margin-top: 2px;
-            margin-bottom: 0;
-            outline: none;
-            transition: border 0.2s;
-          }
-          .settings-input:focus, .settings-select:focus {
-            border-color: var(--settings-input-focus);
-          }
-          .settings-logo-img {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            margin-right: 8px;
-            border-radius: 5px;
-            border: 1px solid var(--settings-input-border);
-          }
-          .settings-logo-img.invalid {
-            border-color: #f00;
-          }
-        `}
-      </style>
+      </div>
     </div>
   );
 }
