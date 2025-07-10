@@ -478,7 +478,7 @@ export default function StudentClinic() {
               <th className="py-2 px-4 border">الصف والشعبة</th>
               <th className="py-2 px-4 border">رقم التسجيل</th>
               <th className="py-2 px-4 border">تاريخ الزيارة</th>
-              <th className="py-2 px-4 border">ملاحظات</th>
+              <th className="py-2 px-4 border">سبب الإحالة</th>
               <th className="py-2 px-4 border">إجراءات</th>
             </tr>
           </thead>
@@ -541,7 +541,7 @@ export default function StudentClinic() {
                   <tr className="bg-gray-100">
                     <th className="py-2 px-4 border">اسم الطالب</th>
                     <th className="py-2 px-4 border">الصف والشعبة</th>
-                    <th className="py-2 px-4 border">ملاحظات</th>
+                    <th className="py-2 px-4 border">سبب الإحالة</th>
                     <th className="py-2 px-4 border">إضافة زيارة</th>
                   </tr>
                 </thead>
@@ -559,7 +559,7 @@ export default function StudentClinic() {
                           <input
                             type="text"
                             className="border rounded p-1 text-black"
-                            placeholder="ملاحظات"
+                            placeholder="سبب الإحالة"
                             value={clinicVisitData[student.id]?.notes || ''}
                             onChange={e => setClinicVisitData(prev => ({
                               ...prev,
