@@ -120,7 +120,7 @@ export default function TeachersList() {
                   <td className="border p-2 text-gray-900 dark:text-gray-100">{`${teacher.university} - ${teacher.college}`}</td>
                   <td className="border p-2 text-gray-900 dark:text-gray-100">{teacher.jobTitle}</td>
                   <td className="border p-2 text-gray-900 dark:text-gray-100">{teacher.phoneNumber}</td>
-                  <td className="border p-2 text-gray-900 dark:text-gray-100">{new Date(teacher.jobStartDate).toLocaleDateString('en-US')}</td>
+                  <td className="border p-2 text-gray-900 dark:text-gray-100">{teacher.jobStartDate ? new Date(teacher.jobStartDate).toLocaleDateString('en-US') : ''}</td>
                   <td className="border p-2">
                     <div className="flex gap-2">
                       <Link
