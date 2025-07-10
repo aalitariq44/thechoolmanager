@@ -186,7 +186,7 @@ export default function SubjectsTeachersPage() {
 
   return (
     <>
-      <style>
+      <style jsx>
         {`
           @media print {
             body * {

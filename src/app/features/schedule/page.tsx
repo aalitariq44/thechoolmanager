@@ -81,7 +81,7 @@ export default function SchoolScheduleApp({
 }: {
   initialSchedule?: Schedule | null,
   onBack?: () => void
-} = {}): JSX.Element {
+}): JSX.Element {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(initialSchedule || null);
   const [currentClass, setCurrentClass] = useState<string>('');
