@@ -60,7 +60,26 @@ interface Teacher {
 
   trainingCourses: TrainingCourse[];
   appreciationLetters: AppreciationLetter[];
+  teachingSubjects?: {
+    className: string;
+    section: string;
+    subject: string;
+    periods: string;
+  }[];
 }
+
+const SUBJECTS_LIST = [
+  'الإسلامية',
+  'القراءة',
+  'اللغة الانكليزية',
+  'الرياضيات',
+  'العلوم',
+  'الاجتماعيات',
+  'الحاسوب',
+  'الاخلاقية',
+  'الرياضة',
+  'الفنية',
+];
 
 export default function TeacherViewEdit({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
@@ -80,6 +99,17 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   const [endorsementNumber, setEndorsementNumber] = useState<string>(''); // العدد للتأييد
   const [showEndorsementPrint, setShowEndorsementPrint] = useState(false); // عرض صفحة التأييد للطباعة
   const [subjectsModalOpen, setSubjectsModalOpen] = useState(false); // نافذة المواد التي يدرسها
+  const [schoolClasses, setSchoolClasses] = useState<string[]>([]);
+  const [schoolSections, setSchoolSections] = useState<string[]>([]);
+  const [teachingSubjects, setTeachingSubjects] = useState<
+    { className: string; section: string; subject: string; periods: string }[]
+  >([]);
+  const [addRow, setAddRow] = useState<{ className: string; section: string; subject: string; periods: string }>({
+    className: '',
+    section: '',
+    subject: '',
+    periods: '',
+  });
 
   useEffect(() => {
     const fetchTeacher = async () => {
@@ -87,7 +117,9 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
         const docRef = doc(db, 'teachers', resolvedParams.id)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
-          setTeacher(docSnap.data() as Teacher)
+          const data = docSnap.data() as Teacher;
+          setTeacher(data);
+          setTeachingSubjects(data.teachingSubjects || []);
         }
         setLoading(false)
       } catch (error) {
@@ -116,6 +148,61 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     fetchSettings();
   }, []);
 
+  // جلب الصفوف والشعب من الإعدادات عند فتح النافذة
+  useEffect(() => {
+    if (subjectsModalOpen) {
+      const fetchSettings = async () => {
+        try {
+          const q = collection(db, "settings");
+          const snapshot = await getDocs(q);
+          if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            // الصفوف من grades
+            setSchoolClasses(Array.isArray(data.grades) && data.grades.length > 0 ? data.grades : []);
+            // الشعب: عند فتح النافذة، نعرض شعب أول صف (أو فارغ)
+            if (Array.isArray(data.grades) && data.grades.length > 0 && data.sections) {
+              const firstClass = data.grades[0];
+              setSchoolSections(Array.isArray(data.sections[firstClass]) ? data.sections[firstClass] : []);
+            } else {
+              setSchoolSections([]);
+            }
+            // عند تغيير الصف المختار في نافذة الإضافة، حدّث الشعب
+            // (نحتاج مراقبة addRow.className)
+          } else {
+            setSchoolClasses([]);
+            setSchoolSections([]);
+          }
+        } catch (e) {
+          setSchoolClasses([]);
+          setSchoolSections([]);
+        }
+      };
+      fetchSettings();
+    }
+  }, [subjectsModalOpen]);
+
+  // عند تغيير الصف المختار في نافذة إضافة مادة، حدّث الشعب لهذا الصف
+  useEffect(() => {
+    if (!subjectsModalOpen) return;
+    const fetchSectionsForClass = async () => {
+      try {
+        const q = collection(db, "settings");
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          if (addRow.className && data.sections && Array.isArray(data.sections[addRow.className])) {
+            setSchoolSections(data.sections[addRow.className]);
+          } else {
+            setSchoolSections([]);
+          }
+        }
+      } catch (e) {
+        setSchoolSections([]);
+      }
+    };
+    fetchSectionsForClass();
+  }, [addRow.className, subjectsModalOpen]);
+
   const handleInputChange = (field: keyof Teacher, value: string) => {
     setTeacher(prev => prev ? { ...prev, [field]: value } : null)
   }
@@ -143,7 +230,9 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
       setSaveStatus('جاري الحفظ...')
       const docRef = doc(db, 'teachers', resolvedParams.id)
       if (teacher) {
-        await updateDoc(docRef, { ...teacher })
+        // أضف teachingSubjects إلى teacher قبل الحفظ
+        await updateDoc(docRef, { ...teacher, teachingSubjects });
+        setTeacher(prev => prev ? { ...prev, teachingSubjects } : prev);
       }
       setSaveStatus('تم الحفظ بنجاح')
       setIsEditing(false)
@@ -228,9 +317,111 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                 ×
               </button>
             </div>
-            {/* محتوى فارغ حالياً */}
-            <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xl">
-              (لا توجد بيانات)
+            {/* نموذج إضافة مادة */}
+            <div className="flex flex-col md:flex-row gap-2 mb-4">
+              <select
+                className="border rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                value={addRow.className}
+                onChange={e => setAddRow(r => ({ ...r, className: e.target.value }))}
+              >
+                <option value="">اختر الصف</option>
+                {schoolClasses.map(cls => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
+              <select
+                className="border rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                value={addRow.section}
+                onChange={e => setAddRow(r => ({ ...r, section: e.target.value }))}
+                disabled={!addRow.className}
+              >
+                <option value="">اختر الشعبة</option>
+                {schoolSections.map(sec => (
+                  <option key={sec} value={sec}>{sec}</option>
+                ))}
+              </select>
+              <select
+                className="border rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                value={addRow.subject}
+                onChange={e => setAddRow(r => ({ ...r, subject: e.target.value }))}
+                disabled={!addRow.className || !addRow.section}
+              >
+                <option value="">اختر المادة</option>
+                {SUBJECTS_LIST.map(subj => (
+                  <option key={subj} value={subj}>{subj}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min="1"
+                className="border rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-24"
+                placeholder="عدد الحصص"
+                value={addRow.periods}
+                onChange={e => setAddRow(r => ({ ...r, periods: e.target.value }))}
+                disabled={!addRow.className || !addRow.section || !addRow.subject}
+              />
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors font-bold"
+                disabled={!addRow.className || !addRow.section || !addRow.subject || !addRow.periods}
+                onClick={() => {
+                  setTeachingSubjects(prev => [
+                    ...prev,
+                    { ...addRow }
+                  ]);
+                  setAddRow({ className: '', section: '', subject: '', periods: '' });
+                }}
+              >
+                إضافة مادة
+              </button>
+            </div>
+            {/* جدول المواد التي يدرسها */}
+            <div className="overflow-x-auto flex-1">
+              <table className="min-w-full border border-gray-300 dark:border-gray-700">
+                <thead>
+                  <tr>
+                    <th className="border px-2 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">الصف</th>
+                    <th className="border px-2 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">الشعبة</th>
+                    <th className="border px-2 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">المادة</th>
+                    <th className="border px-2 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">عدد الحصص</th>
+                    <th className="border px-2 py-2 bg-gray-100 dark:bg-gray-800"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teachingSubjects.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center text-gray-400 py-8">لا توجد مواد مضافة</td>
+                    </tr>
+                  ) : (
+                    teachingSubjects.map((row, idx) => (
+                      <tr key={idx}>
+                        <td className="border px-2 py-2">{row.className}</td>
+                        <td className="border px-2 py-2">{row.section}</td>
+                        <td className="border px-2 py-2">{row.subject}</td>
+                        <td className="border px-2 py-2">{row.periods}</td>
+                        <td className="border px-2 py-2">
+                          <button
+                            className="text-red-600 hover:underline"
+                            onClick={() => setTeachingSubjects(ts => ts.filter((_, i) => i !== idx))}
+                            title="حذف"
+                          >حذف</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {/* زر حفظ المواد */}
+            <div className="flex justify-end mt-4">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-bold"
+                onClick={() => {
+                  setTeacher(prev => prev ? { ...prev, teachingSubjects } : prev);
+                  setSubjectsModalOpen(false);
+                }}
+              >
+                حفظ المواد
+              </button>
             </div>
           </div>
         </div>
