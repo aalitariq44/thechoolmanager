@@ -244,6 +244,17 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     }
   }
 
+  const handleUpdateTeachingSubjects = async (newSubjects: typeof teachingSubjects) => {
+    setTeachingSubjects(newSubjects);
+    setTeacher(prev => prev ? { ...prev, teachingSubjects: newSubjects } : null);
+    try {
+      const docRef = doc(db, 'teachers', resolvedParams.id);
+      await updateDoc(docRef, { teachingSubjects: newSubjects });
+    } catch (error) {
+      console.error('Error updating teaching subjects:', error);
+    }
+  };
+
   // نافذة الطباعة لجمع اسم المعلم والعدد
   const handlePrint = () => {
     setPrintSchoolName('');
@@ -364,10 +375,8 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors font-bold"
                 disabled={!addRow.className || !addRow.section || !addRow.subject || !addRow.periods}
                 onClick={() => {
-                  setTeachingSubjects(prev => [
-                    ...prev,
-                    { ...addRow }
-                  ]);
+                  const newSubjects = [...teachingSubjects, { ...addRow }];
+                  handleUpdateTeachingSubjects(newSubjects);
                   setAddRow({ className: '', section: '', subject: '', periods: '' });
                 }}
               >
@@ -401,7 +410,10 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                         <td className="border px-2 py-2">
                           <button
                             className="text-red-600 hover:underline"
-                            onClick={() => setTeachingSubjects(ts => ts.filter((_, i) => i !== idx))}
+                            onClick={() => {
+                              const newSubjects = teachingSubjects.filter((_, i) => i !== idx);
+                              handleUpdateTeachingSubjects(newSubjects);
+                            }}
                             title="حذف"
                           >حذف</button>
                         </td>
@@ -419,18 +431,6 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
                   </tr>
                 </tfoot>
               </table>
-            </div>
-            {/* زر حفظ المواد */}
-            <div className="flex justify-end mt-4">
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-bold"
-                onClick={() => {
-                  setTeacher(prev => prev ? { ...prev, teachingSubjects } : prev);
-                  setSubjectsModalOpen(false);
-                }}
-              >
-                حفظ المواد
-              </button>
             </div>
           </div>
         </div>
