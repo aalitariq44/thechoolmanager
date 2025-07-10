@@ -79,6 +79,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   const [endorsementSchoolName, setEndorsementSchoolName] = useState<string>(''); // اسم الجهة للتأييد
   const [endorsementNumber, setEndorsementNumber] = useState<string>(''); // العدد للتأييد
   const [showEndorsementPrint, setShowEndorsementPrint] = useState(false); // عرض صفحة التأييد للطباعة
+  const [subjectsModalOpen, setSubjectsModalOpen] = useState(false); // نافذة المواد التي يدرسها
 
   useEffect(() => {
     const fetchTeacher = async () => {
@@ -213,6 +214,27 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
 
   return (
     <>
+      {/* نافذة المواد التي يدرسها */}
+      {subjectsModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-3xl min-h-[400px] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">المواد التي يدرسها</h2>
+              <button
+                className="text-gray-600 dark:text-gray-300 hover:text-red-600 text-2xl font-bold"
+                onClick={() => setSubjectsModalOpen(false)}
+                title="إغلاق"
+              >
+                ×
+              </button>
+            </div>
+            {/* محتوى فارغ حالياً */}
+            <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xl">
+              (لا توجد بيانات)
+            </div>
+          </div>
+        </div>
+      )}
       {/* نافذة اختيار بيانات الطباعة */}
       {printModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -383,6 +405,13 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
             {isEditing ? 'تعديل بيانات المعلم' : 'عرض بيانات المعلم'}
           </h1>
           <div className="flex gap-2">
+            {/* زر المواد التي يدرسها */}
+            <button
+              onClick={() => setSubjectsModalOpen(true)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded print:hidden"
+            >
+              المواد التي يدرسها
+            </button>
             <button
               onClick={() => setIsEditing(!isEditing)}
               className={`px-4 py-2 rounded text-white ${
