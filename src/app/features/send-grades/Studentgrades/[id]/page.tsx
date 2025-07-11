@@ -309,7 +309,27 @@ export default function StudentGrades() {
     };
 
     // تنفيذ الطباعة بعد اختيار الأعمدة
-    const doPrintGrades = () => {
+    const doPrintGrades = async () => {
+        if (!studentInfo) return;
+
+        // Save to outgoings collection
+        try {
+            const docRef = doc(collection(db, 'outgoings'));
+            await setDoc(docRef, {
+                to: printSchoolName,
+                count: printNumber,
+                subject: `ارسال درجات الطالب`,
+                content: `ارسال درجات الطالب: ${studentInfo.name} ${studentInfo.fatherName || ''}`,
+                date: new Date().toISOString().split('T')[0],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            });
+        } catch (error) {
+            console.error("Error creating outgoing document for grades: ", error);
+            alert('حدث خطأ أثناء تسجيل الصادر');
+            return; // Stop if saving fails
+        }
+
         setPrintModalOpen(false);
         setTimeout(() => {
             const printContents = document.getElementById('grades-table-print')?.innerHTML;
@@ -554,7 +574,7 @@ export default function StudentGrades() {
                             onClick={handlePrintGrades}
                             className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-bold shadow text-lg"
                         >
-                            طباعة الدرجات
+                            ارسال الدرجات
                         </button>
                     </div>
                 </div>
