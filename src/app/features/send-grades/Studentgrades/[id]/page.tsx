@@ -473,13 +473,13 @@ export default function StudentGrades() {
                         <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">اختيار الأعمدة للطباعة</h2>
                         <div className="flex flex-col gap-2 mb-4">
                             <label className="flex flex-col gap-1 text-gray-900 dark:text-gray-100">
-                                <span>اسم المدرسة :</span>
+                                <span>اسم الجهة</span>
                                 <input
                                     type="text"
                                    
                                     onChange={e => setPrintSchoolName(e.target.value)}
                                     className="border rounded px-2 py-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
-                                    placeholder="ادخل اسم المدرسة"
+                                    placeholder="ادخل اسم الجهة"
                                 />
                             </label>
                             <label className="flex flex-col gap-1 text-gray-900 dark:text-gray-100">

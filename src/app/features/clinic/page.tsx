@@ -33,7 +33,7 @@ export default function StudentClinic() {
   const [searchQuery] = useState('');
   const [sortField] = useState<'name' | 'clinicVisits'>('clinicVisits');
   const [sortDirection] = useState<'asc' | 'desc'>('desc');
-  const [clinicVisitData, setClinicVisitData] = useState<{ [studentId: string]: { date: string; notes: string } }>({});
+  const [clinicVisitData, setClinicVisitData] = useState<{ [studentId: string]: { date: string; notes: string; count: string } }>({});
   const [saving, setSaving] = useState<{ [studentId: string]: boolean }>({});
   const [error, setError] = useState<{ [studentId: string]: string | null }>({});
   const [clinicVisitsCount, setClinicVisitsCount] = useState<{ [studentId: string]: number }>({});
@@ -159,19 +159,40 @@ export default function StudentClinic() {
   });
 
   // تعديل handleAddClinicVisit ليضيف زيارة فقط عند اختيار الطالب، ويملأ التاريخ تلقائياً
-  const handleAddClinicVisit = async (studentId: string) => {
+  const handleAddClinicVisit = async (student: StudentData) => {
+    const studentId = student.id;
     setSaving((prev) => ({ ...prev, [studentId]: true }));
     setError((prev) => ({ ...prev, [studentId]: null }));
+
+    const visitNotes = clinicVisitData[studentId]?.notes || '';
+    const visitCount = clinicVisitData[studentId]?.count || '';
+
     try {
+      // 1. Add to clinicVisits
       await addDoc(collection(db, 'clinicVisits'), {
         studentId,
-        date: new Date().toISOString().slice(0, 10), // تاريخ اليوم بصيغة YYYY-MM-DD
-        notes: clinicVisitData[studentId]?.notes || '',
+        date: new Date().toISOString().slice(0, 10),
+        notes: visitNotes,
         createdAt: new Date().toISOString(),
       });
-      setClinicVisitData((prev) => ({ ...prev, [studentId]: { date: '', notes: '' } }));
+
+      // 2. Add to outgoings
+      const studentFullName = `${student.personalInfo.name} ${student.personalInfo.fatherName || ''}`.trim();
+      await addDoc(collection(db, 'outgoings'), {
+        to: 'المركز الصحي',
+        count: visitCount,
+        subject: 'إحالة',
+        content: `إحالة الطالب: ${studentFullName}`,
+        date: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // 3. Reset form state for this student
+      setClinicVisitData((prev) => ({ ...prev, [studentId]: { date: '', notes: '', count: '' } }));
+
     } catch (e) {
-      console.error("Error adding clinic visit: ", e);
+      console.error("Error adding clinic visit and outgoing record: ", e);
       setError((prev) => ({ ...prev, [studentId]: 'حدث خطأ أثناء الحفظ' }));
     } finally {
       setSaving((prev) => ({ ...prev, [studentId]: false }));
@@ -415,6 +436,7 @@ export default function StudentClinic() {
                     <th className="py-2 px-4 border">اسم الطالب</th>
                     <th className="py-2 px-4 border">الصف والشعبة</th>
                     <th className="py-2 px-4 border">سبب الإحالة</th>
+                    <th className="py-2 px-4 border">العدد</th>
                     <th className="py-2 px-4 border">إضافة زيارة</th>
                   </tr>
                 </thead>
@@ -441,10 +463,22 @@ export default function StudentClinic() {
                           />
                         </td>
                         <td className="py-2 px-4 border">
+                          <input
+                            type="text"
+                            className="border rounded p-1 text-black"
+                            placeholder="العدد"
+                            value={clinicVisitData[student.id]?.count || ''}
+                            onChange={e => setClinicVisitData(prev => ({
+                              ...prev,
+                              [student.id]: { ...prev[student.id], count: e.target.value }
+                            }))}
+                          />
+                        </td>
+                        <td className="py-2 px-4 border">
                           <div className="flex flex-col gap-1">
                             <button
                               className="bg-green-600 text-white px-2 py-1 rounded text-xs disabled:opacity-50"
-                              onClick={() => handleAddClinicVisit(student.id)}
+                              onClick={() => handleAddClinicVisit(student)}
                               disabled={saving[student.id]}
                             >
                               {saving[student.id] ? 'جاري الحفظ...' : 'إضافة'}

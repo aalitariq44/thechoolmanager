@@ -1,6 +1,6 @@
 "use client";
 
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { db } from '../../../../../firebase/config';
@@ -54,7 +54,28 @@ export default function ViewStudentRecord() {
     setStudentEndorsementModalOpen(true);
   };
 
-  const doStudentEndorsementPrint = () => {
+  const doStudentEndorsementPrint = async () => {
+    if (!studentData) return;
+
+    // Combine student name with father's name for the full name
+    const fullName = `${studentData.name ?? ''} ${studentData.fatherName ?? ''}`.trim();
+
+    try {
+      const docRef = doc(collection(db, 'outgoings'));
+      await setDoc(docRef, {
+        to: studentEndorsementSchoolName,
+        count: studentEndorsementNumber,
+        subject: `تأييد استمرارية طالب`,
+        content: `تأييد استمرارية بالدوام للطالب: ${fullName}`,
+        date: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error creating outgoing document for student endorsement: ", error);
+      // Optionally, you can add a user-facing error message here
+    }
+
     setStudentEndorsementModalOpen(false);
     setShowStudentEndorsementPrint(true);
   };

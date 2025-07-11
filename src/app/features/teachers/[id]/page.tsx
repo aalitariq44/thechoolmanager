@@ -1,9 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, collection, getDocs, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
 import { use } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
 
 interface TrainingCourse {
   name: string;
@@ -263,7 +262,23 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   };
 
   // تنفيذ الطباعة بعد جمع البيانات
-  const doPrint = () => {
+  const doPrint = async () => {
+    if (!teacher) return;
+    try {
+      const docRef = doc(collection(db, 'outgoings'));
+      await setDoc(docRef, {
+        to: printSchoolName,
+        count: printNumber,
+        subject: `ارسال بيانات المعلم`,
+        content: `ارسال بيانات المعلم: ${teacher.fullName}`,
+        date: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error creating outgoing document: ", error);
+      // Optionally, show an error message to the user
+    }
     setPrintModalOpen(false);
     setShowPrint(true);
   };
@@ -281,7 +296,23 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
     setEndorsementModalOpen(true);
   };
 
-  const doEndorsementPrint = () => {
+  const doEndorsementPrint = async () => {
+    if (!teacher) return;
+    try {
+      const docRef = doc(collection(db, 'outgoings'));
+      await setDoc(docRef, {
+        to: endorsementSchoolName,
+        count: endorsementNumber,
+        subject: `تأييد استمرارية`,
+        content: `تأييد استمرارية بالدوام للمعلم: ${teacher.fullName}`,
+        date: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error creating outgoing document: ", error);
+      // Optionally, show an error message to the user
+    }
     setEndorsementModalOpen(false);
     setShowEndorsementPrint(true);
   };
