@@ -266,21 +266,12 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   const doPrint = () => {
     setPrintModalOpen(false);
     setShowPrint(true);
-    setTimeout(() => {
-      window.print();
-      setShowPrint(false);
-    }, 100);
   };
 
   // زر طباعة بيانات المعلم (بدون نافذة)
   const handleSimplePrint = () => {
     setSimplePrint(true);
     setShowPrint(true);
-    setTimeout(() => {
-      window.print();
-      setShowPrint(false);
-      setSimplePrint(false);
-    }, 100);
   };
 
   // نافذة طباعة تأييد الاستمرار
@@ -293,11 +284,40 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
   const doEndorsementPrint = () => {
     setEndorsementModalOpen(false);
     setShowEndorsementPrint(true);
-    setTimeout(() => {
-      window.print();
-      setShowEndorsementPrint(false);
-    }, 100);
   };
+
+  useEffect(() => {
+    if (showPrint) {
+      const handleAfterPrint = () => {
+        setShowPrint(false);
+        if (simplePrint) {
+          setSimplePrint(false);
+        }
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+      window.addEventListener('afterprint', handleAfterPrint);
+      window.print();
+
+      return () => {
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+    }
+  }, [showPrint, simplePrint]);
+
+  useEffect(() => {
+    if (showEndorsementPrint) {
+      const handleAfterPrint = () => {
+        setShowEndorsementPrint(false);
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+      window.addEventListener('afterprint', handleAfterPrint);
+      window.print();
+
+      return () => {
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+    }
+  }, [showEndorsementPrint]);
 
   const graduationYears = Array.from(
     { length: new Date().getFullYear() - 1950 + 1 },
@@ -527,7 +547,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
       )}
       {/* صفحة طباعة تأييد الاستمرار */}
       {showEndorsementPrint && (
-        <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div className="printable-section fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
               <div style={{ width: '32%', textAlign: 'right', fontSize: 18 }}>
@@ -566,6 +586,18 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
       {/* إخفاء ترويسة وتذييل الطباعة في المتصفح */}
       <style>
         {`@media print {
+          body * {
+            visibility: hidden;
+          }
+          .printable-section, .printable-section * {
+            visibility: visible;
+          }
+          .printable-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
           @page {
             margin: 0;
             size: auto;
@@ -656,7 +688,7 @@ export default function TeacherViewEdit({ params }: { params: Promise<{ id: stri
         {showPrint && (
           <div
             className={
-              `fixed inset-0 bg-white text-black p-8 z-50 print:block` +
+              `printable-section fixed inset-0 bg-white text-black p-8 z-50 print:block` +
               (!simplePrint ? ' print-teacher-send' : '')
             }
             style={{ direction: 'rtl' }}

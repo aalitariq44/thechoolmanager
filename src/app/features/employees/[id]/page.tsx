@@ -107,11 +107,22 @@ export default function EmployeeViewEdit() {
 
   const handlePrint = () => {
     setShowPrint(true);
-    setTimeout(() => {
-      window.print();
-      setShowPrint(false);
-    }, 100);
   };
+
+  useEffect(() => {
+    if (showPrint) {
+      const handleAfterPrint = () => {
+        setShowPrint(false);
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+      window.addEventListener('afterprint', handleAfterPrint);
+      window.print();
+
+      return () => {
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+    }
+  }, [showPrint]);
 
   if (loading) return <div className="p-6 text-center text-gray-900 dark:text-gray-100">جاري التحميل...</div>
   if (!employee) return <div className="p-6 text-center text-red-600 dark:text-red-400">لم يتم العثور على الموظف</div>
@@ -121,6 +132,18 @@ export default function EmployeeViewEdit() {
       {/* إخفاء ترويسة وتذييل الطباعة في المتصفح */}
       <style>
         {`@media print {
+          body * {
+            visibility: hidden;
+          }
+          .printable-section, .printable-section * {
+            visibility: visible;
+          }
+          .printable-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
           @page {
             margin: 0;
             size: auto;
@@ -144,7 +167,7 @@ export default function EmployeeViewEdit() {
 
         {/* نسخة الطباعة */}
         {showPrint && (
-          <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
+          <div className="printable-section fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl' }}>
             <h2 className="text-2xl font-bold mb-4 text-center">بيانات الموظف</h2>
             <table className="w-full mb-4 border">
               <tbody>

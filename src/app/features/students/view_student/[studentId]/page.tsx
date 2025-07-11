@@ -47,6 +47,32 @@ export default function ViewStudentRecord() {
   const [studentEndorsementNumber, setStudentEndorsementNumber] = useState<string>(''); // العدد للتأييد
   const [showStudentEndorsementPrint, setShowStudentEndorsementPrint] = useState(false); // عرض صفحة التأييد للطباعة
 
+  // Functions for student endorsement print
+  const handleStudentEndorsementPrint = () => {
+    setStudentEndorsementSchoolName('');
+    setStudentEndorsementNumber('');
+    setStudentEndorsementModalOpen(true);
+  };
+
+  const doStudentEndorsementPrint = () => {
+    setStudentEndorsementModalOpen(false);
+    setShowStudentEndorsementPrint(true);
+  };
+
+  useEffect(() => {
+    if (showStudentEndorsementPrint) {
+      const handleAfterPrint = () => {
+        setShowStudentEndorsementPrint(false);
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+      window.addEventListener('afterprint', handleAfterPrint);
+      window.print();
+
+      return () => {
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+    }
+  }, [showStudentEndorsementPrint]);
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -150,21 +176,6 @@ export default function ViewStudentRecord() {
   // دمج اسم الطالب مع اسم الأب (بدون "غير موجود" لاسم الأب)
   const fullName = `${displayValue(studentData.name)} ${studentData.fatherName ?? ''}`;
 
-  // Functions for student endorsement print
-  const handleStudentEndorsementPrint = () => {
-    setStudentEndorsementSchoolName('');
-    setStudentEndorsementNumber('');
-    setStudentEndorsementModalOpen(true);
-  };
-
-  const doStudentEndorsementPrint = () => {
-    setStudentEndorsementModalOpen(false);
-    setShowStudentEndorsementPrint(true);
-    setTimeout(() => {
-      window.print();
-      setShowStudentEndorsementPrint(false);
-    }, 100); // Small delay to ensure print view is rendered
-  };
 
 
   return (
@@ -217,7 +228,7 @@ export default function ViewStudentRecord() {
 
       {/* صفحة طباعة تأييد الاستمرار للطالب */}
       {showStudentEndorsementPrint && (
-        <div className="fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div className="printable-section fixed inset-0 bg-white text-black p-8 z-50 print:block" style={{ direction: 'rtl', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
               <div style={{ width: '32%', textAlign: 'right', fontSize: 18 }}>
@@ -257,19 +268,24 @@ export default function ViewStudentRecord() {
       {/* إخفاء ترويسة وتذييل الطباعة في المتصفح */}
       <style>
         {`@media print {
+          body * {
+            visibility: hidden;
+          }
+          .printable-section, .printable-section * {
+            visibility: visible;
+          }
+          .printable-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
           @page {
             margin: 0;
             size: auto;
           }
           body {
             margin: 0;
-          }
-          /* Hide everything except the print view */
-          body > div:not(.print-only-student-endorsement) {
-            display: none !important;
-          }
-          .print-only-student-endorsement {
-             display: block !important;
           }
         }`}
       </style>
