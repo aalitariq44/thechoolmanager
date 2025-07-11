@@ -186,13 +186,26 @@ export default function SubjectsTeachersPage() {
 
   return (
     <>
-      <style jsx>
+      <style jsx global>
         {`
+          @page {
+            size: auto;
+            margin: 0;
+          }
           @media print {
+            /* Hide layout elements like sidebar, header, etc. */
+            header,
+            aside,
+            nav,
+            footer {
+              display: none !important;
+            }
+
             body * {
               visibility: hidden;
             }
-            .printable-area, .printable-area * {
+            .printable-area,
+            .printable-area * {
               visibility: visible;
             }
             .printable-area {
@@ -202,11 +215,12 @@ export default function SubjectsTeachersPage() {
               width: 100%;
             }
             .dark .print-override {
-                color: #000 !important;
-                background-color: #fff !important;
+              color: #000 !important;
+              background-color: #fff !important;
             }
-             .print-override th, .print-override td {
-                border-color: #ccc !important;
+            .print-override th,
+            .print-override td {
+              border-color: #ccc !important;
             }
           }
         `}
