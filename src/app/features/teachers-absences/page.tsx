@@ -98,24 +98,32 @@ interface DetailsModalProps {
   onClose: () => void;
   title: string;
   data: { [key: string]: { notes: string } };
+  handleDelete: (dateKey: string) => void;
 }
 
-const DetailsModal = ({ isOpen, onClose, title, data }: DetailsModalProps) => {
+const DetailsModal = ({ isOpen, onClose, title, data, handleDelete }: DetailsModalProps) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" dir="rtl">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl">
         <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">{title}</h2>
         <div className="max-h-96 overflow-y-auto">
-          <ul>
-            {Object.entries(data).map(([date, info]) => (
-              <li key={date} className="mb-2 p-2 border-b">
-                <strong>التاريخ:</strong> {date.replace(/_/g, '-')} <br />
-                <strong>ملاحظات:</strong> {info.notes}
-              </li>
-            ))}
-          </ul>
+          <table className="w-full">
+            <tbody>
+              {Object.entries(data).map(([date, info]) => (
+                <tr key={date} className="border-b">
+                  <td className="p-2"><strong>التاريخ:</strong> {date.replace(/_/g, '-')}</td>
+                  <td className="p-2"><strong>ملاحظات:</strong> {info.notes}</td>
+                  <td className="p-2 text-left">
+                    <button onClick={() => handleDelete(date)} className="text-red-500 hover:text-red-700 font-bold">
+                      حذف
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <div className="flex justify-end mt-4">
           <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded">إغلاق</button>
@@ -132,8 +140,10 @@ const TeachersAbsencesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsData, setDetailsData] = useState({});
+  const [detailsData, setDetailsData] = useState<{ [key: string]: { notes: string } }>({});
   const [detailsTitle, setDetailsTitle] = useState('');
+  const [currentTeacher, setCurrentTeacher] = useState<Teacher | null>(null);
+  const [currentDetailType, setCurrentDetailType] = useState<'absences' | 'leaves' | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'teachers'));
@@ -160,6 +170,52 @@ const TeachersAbsencesPage = () => {
     setSelectedTeacherId(null);
   };
 
+  const handlePrintTeacherReport = (teacher: Teacher) => {
+    const printWindow = window.open('', '', 'height=800,width=1000');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>تقرير غيابات وإجازات</title>');
+      printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">');
+      printWindow.document.write('<style>body { font-family: "Amiri", serif; }</style>');
+      printWindow.document.write('</head><body dir="rtl" class="p-10">');
+      printWindow.document.write(`<h1 class="text-2xl font-bold text-center mb-6">تقرير الغيابات والإجازات لـ: ${teacher.fullName}</h1>`);
+      printWindow.document.write('<div class="grid grid-cols-2 gap-8">');
+      
+      // Absences Column
+      printWindow.document.write('<div>');
+      printWindow.document.write('<h2 class="text-xl font-bold mb-4 border-b pb-2">الغيابات</h2>');
+      printWindow.document.write('<table class="min-w-full bg-white"><thead><tr><th class="py-2 px-4 border-b">التاريخ</th><th class="py-2 px-4 border-b">الملاحظات</th></tr></thead><tbody>');
+      if (teacher.absences && Object.keys(teacher.absences).length > 0) {
+        Object.entries(teacher.absences).forEach(([date, info]) => {
+          printWindow.document.write(`<tr><td class="border px-4 py-2">${date.replace(/_/g, '-')}</td><td class="border px-4 py-2">${info.notes}</td></tr>`);
+        });
+      } else {
+        printWindow.document.write('<tr><td colspan="2" class="text-center py-4">لا توجد غيابات مسجلة</td></tr>');
+      }
+      printWindow.document.write('</tbody></table>');
+      printWindow.document.write('</div>');
+
+      // Leaves Column
+      printWindow.document.write('<div>');
+      printWindow.document.write('<h2 class="text-xl font-bold mb-4 border-b pb-2">الإجازات</h2>');
+      printWindow.document.write('<table class="min-w-full bg-white"><thead><tr><th class="py-2 px-4 border-b">التاريخ</th><th class="py-2 px-4 border-b">الملاحظات</th></tr></thead><tbody>');
+      if (teacher.leaves && Object.keys(teacher.leaves).length > 0) {
+        Object.entries(teacher.leaves).forEach(([date, info]) => {
+          printWindow.document.write(`<tr><td class="border px-4 py-2">${date.replace(/_/g, '-')}</td><td class="border px-4 py-2">${info.notes}</td></tr>`);
+        });
+      } else {
+        printWindow.document.write('<tr><td colspan="2" class="text-center py-4">لا توجد إجازات مسجلة</td></tr>');
+      }
+      printWindow.document.write('</tbody></table>');
+      printWindow.document.write('</div>');
+
+      printWindow.document.write('</div>'); // Close grid
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => { printWindow.print(); }, 500);
+    }
+  };
+
   const handleSave = async (date: string, notes: string, type: 'absence' | 'leave') => {
     if (!selectedTeacherId) return;
   
@@ -174,6 +230,27 @@ const TeachersAbsencesPage = () => {
     } catch (error) {
       console.error(`Error updating ${type}:`, error);
       alert(`حدث خطأ أثناء حفظ ال${type === 'absence' ? 'غياب' : 'إجازة'}.`);
+    }
+  };
+
+  const handleDeleteDetail = async (dateKey: string) => {
+    if (!currentTeacher || !currentDetailType) return;
+    if (!confirm('هل أنت متأكد من حذف هذا العنصر؟')) return;
+
+    const teacherRef = doc(db, 'teachers', currentTeacher.id);
+    const field = `${currentDetailType}.${dateKey}`;
+
+    try {
+      await updateDoc(teacherRef, {
+        [field]: deleteField()
+      });
+      // Optimistically update the local state
+      const updatedData = { ...detailsData };
+      delete updatedData[dateKey];
+      setDetailsData(updatedData);
+    } catch (error) {
+      console.error("Error deleting detail:", error);
+      alert('حدث خطأ أثناء الحذف.');
     }
   };
 
@@ -203,6 +280,8 @@ const TeachersAbsencesPage = () => {
                 <td className="border p-2">{teacher.fullName}</td>
                 <td className="border p-2 text-center">
                   <button onClick={() => {
+                    setCurrentTeacher(teacher);
+                    setCurrentDetailType('absences');
                     setDetailsData(teacher.absences || {});
                     setDetailsTitle(`غيابات ${teacher.fullName}`);
                     setDetailsModalOpen(true);
@@ -212,6 +291,8 @@ const TeachersAbsencesPage = () => {
                 </td>
                 <td className="border p-2 text-center">
                   <button onClick={() => {
+                    setCurrentTeacher(teacher);
+                    setCurrentDetailType('leaves');
                     setDetailsData(teacher.leaves || {});
                     setDetailsTitle(`إجازات ${teacher.fullName}`);
                     setDetailsModalOpen(true);
@@ -220,8 +301,11 @@ const TeachersAbsencesPage = () => {
                   </button>
                 </td>
                 <td className="border p-2 text-center">
-                  <button onClick={() => handleOpenModal(teacher.id)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                    إضافة غياب / إجازة
+                  <button onClick={() => handleOpenModal(teacher.id)} className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors text-sm ml-2">
+                    إضافة
+                  </button>
+                  <button onClick={() => handlePrintTeacherReport(teacher)} className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors text-sm">
+                    طباعة التقرير
                   </button>
                 </td>
               </tr>
@@ -240,6 +324,7 @@ const TeachersAbsencesPage = () => {
         onClose={() => setDetailsModalOpen(false)}
         title={detailsTitle}
         data={detailsData}
+        handleDelete={handleDeleteDetail}
       />
     </div>
   );
