@@ -147,6 +147,14 @@ function Sidebar(): JSX.Element {
             </svg>
             <span className="text-gray-700 dark:text-gray-300">القاعات</span>
           </div>
+
+          <div onClick={() => router.push('/features/salaries')} className="mb-1 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer flex items-center gap-2">
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className="text-gray-700 dark:text-gray-300">الرواتب</span>
+          </div>
         </div>
 
         {/* الدراسة والجدول */}
